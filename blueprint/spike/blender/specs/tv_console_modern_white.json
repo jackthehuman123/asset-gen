@@ -1,0 +1,52 @@
+{
+  "brief": "A cabinet placed in the living room, often used to place a TV on top. A typical white living room in a modern American home.",
+
+  "design_notes": [
+    "Role: TV console, so it should be low and wide. TV consoles are about 0.6 m tall and 1.6-1.8 m wide. At ~0.32 m per stud (5.5-stud character ~ 1.75 m) that's ~2 studs tall, ~5.4 studs wide. The original 3-stud-tall cabinet reads as a dresser, not a TV console.",
+    "Room is white: an all-white cabinet disappears into it, and dark wood fights it. Light natural oak brings warmth and keeps the airy look.",
+    "Two-tone: matte warm-white fronts on an oak frame is a staple of modern American living rooms. The fronts tie to the walls and the oak frames them.",
+    "Matte black hardware: thin, high contrast against white fronts, current in modern American interiors. Foot caps match the handles so there's a single metal in the piece.",
+    "Lived-in but cared for: no visible wear, no grime."
+  ],
+
+  "dimensions": {
+    "width": 5.4,
+    "depth": 1.5,
+    "leg_height": 0.45,
+    "body_height": 1.55,
+    "drawer_column_width": 1.7
+  },
+
+  "parts": {
+    "top": "oak",
+    "carcass": "oak",
+    "legs": "oak",
+    "fronts": "white_lacquer",
+    "handles": "black_metal",
+    "foot_caps": "black_metal"
+  },
+
+  "finishes": {
+    "oak": {
+      "type": "wood",
+      "base": "#C8A57C",
+      "grain": "#A9855A",
+      "grain_scale": 1.0,
+      "grain_contrast": 0.55,
+      "roughness": 0.55,
+      "bump": 0.08
+    },
+    "white_lacquer": {
+      "type": "paint",
+      "color": "#EEEAE3",
+      "roughness": 0.4,
+      "orange_peel": 0.015
+    },
+    "black_metal": {
+      "type": "metal",
+      "color": "#1C1C1C",
+      "roughness": 0.45,
+      "brushed": 0.3
+    }
+  }
+}

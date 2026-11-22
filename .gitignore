@@ -1,0 +1,10 @@
+.venv/
+.env
+assets/**/out/
+assets/**/samples/
+assets/**/_tiles/
+__pycache__/
+blueprint/spike/blender/out*/
+*.log
+tools/
+.superpowers/

@@ -1,0 +1,73 @@
+{
+  "brief": "Stained wood, Japanese house. Assume there was a murder there; the house has been abandoned for 5 years.",
+
+  "design_notes": [
+    "Japanese homes sit lower and furniture is lower: body 1.4 studs, stubby 0.2-stud legs. It reads closer to a tansu chest than a mid-century American console.",
+    "Stained wood: kaki-shibu (persimmon tannin) stain on zelkova, a deep reddish-brown with dark grain. One wood for the whole piece, as a tansu would have; the fronts are a touch warmer so they still read as separate panels.",
+    "Hardware: black forged iron, as on tansu. Five years in a closed, humid house means rust blooms, worst in crevices.",
+    "Five years abandoned: a heavy dust layer on every upward-facing surface, grime packed into seams, stain rubbed off the edges and corners (from years of use before), water rings and stains from a leaking roof.",
+    "The murder: dried, oxidised blood, near-black brown, not bright red. A smear over the top-left edge running down across the drawer fronts in drips, as if someone fell against it. Kept to one area. It's a story detail, not a coat of paint."
+  ],
+
+  "dimensions": {
+    "width": 4.8,
+    "depth": 1.4,
+    "leg_height": 0.2,
+    "body_height": 1.4,
+    "drawer_column_width": 1.6
+  },
+
+  "parts": {
+    "top": "stained_zelkova",
+    "carcass": "stained_zelkova",
+    "legs": "stained_zelkova",
+    "fronts": "stained_zelkova_fronts",
+    "handles": "forged_iron",
+    "foot_caps": "forged_iron"
+  },
+
+  "finishes": {
+    "stained_zelkova": {
+      "type": "wood",
+      "base": "#5A3220",
+      "grain": "#2A140B",
+      "grain_scale": 1.2,
+      "grain_contrast": 0.8,
+      "roughness": 0.5,
+      "bump": 0.15,
+      "edge_color": "#8A5E3C"
+    },
+    "stained_zelkova_fronts": {
+      "type": "wood",
+      "base": "#643822",
+      "grain": "#2E160B",
+      "grain_scale": 1.0,
+      "grain_contrast": 0.8,
+      "roughness": 0.5,
+      "bump": 0.15,
+      "edge_color": "#8F6240"
+    },
+    "forged_iron": {
+      "type": "metal",
+      "color": "#26231F",
+      "roughness": 0.65,
+      "brushed": 0.1,
+      "rust": 0.5,
+      "rust_color": "#5C2C14",
+      "edge_color": "#5A5650"
+    }
+  },
+
+  "wear": {
+    "edge": 0.7,
+    "grime": 0.8,
+    "dust": 0.8,
+    "dust_color": "#857E70",
+    "water_stains": 0.5,
+    "blood": {
+      "amount": 0.75,
+      "color": "#2B0906",
+      "region": { "x": [0.0, 0.42], "z": [0.35, 1.0] }
+    }
+  }
+}
