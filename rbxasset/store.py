@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional, Tuple
 
 
 @dataclass
@@ -43,20 +44,37 @@ class AssetPaths:
         return self.dir / "roblox.json"
 
 
-def asset_paths(root: Path, ref: str) -> AssetPaths:
+BLUEPRINT = "blueprint"
+RESERVED = ("areas", "_tiles")
+
+
+def split_ref(ref: str) -> Tuple[str, str]:
     parts = ref.split("/")
-    if len(parts) != 2 or not all(parts):
-        raise ValueError(f"asset ref must be '<area>/<asset>', got {ref!r}")
-    return AssetPaths(dir=root / "assets" / parts[0] / parts[1])
+    if len(parts) != 2 or not all(parts) or parts[1] in RESERVED:
+        raise ValueError(f"asset ref must be '<game>/<asset>' (asset not one of "
+                         f"{', '.join(RESERVED)}), got {ref!r}")
+    return parts[0], parts[1]
 
 
-def tiles_dir(root: Path, area: str) -> Path:
-    return root / "assets" / area / "_tiles"
+def asset_paths(root: Path, ref: str) -> AssetPaths:
+    game, asset = split_ref(ref)
+    if game == BLUEPRINT:
+        return AssetPaths(dir=root / BLUEPRINT / f"out_{asset}")
+    return AssetPaths(dir=root / "games" / game / asset)
 
 
-def game_style_path(root: Path) -> Path:
-    return root / "game" / "STYLE.md"
+def tiles_dir(root: Path, game: str) -> Path:
+    if game == BLUEPRINT:
+        return root / BLUEPRINT / "_tiles"
+    return root / "games" / game / "_tiles"
 
 
-def area_style_path(root: Path, area: str) -> Path:
-    return root / "game" / "areas" / area / "STYLE.md"
+def game_style_path(root: Path, game: str, asset: Optional[str] = None) -> Path:
+    """Games share one STYLE.md; a blueprint test carries its own inside out_<asset>/."""
+    if game == BLUEPRINT:
+        return root / BLUEPRINT / f"out_{asset}" / "STYLE.md"
+    return root / "games" / game / "STYLE.md"
+
+
+def area_style_path(root: Path, game: str, area: str) -> Path:
+    return root / "games" / game / "areas" / area / "STYLE.md"

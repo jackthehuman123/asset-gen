@@ -39,13 +39,25 @@ def _print_result(manifest: Dict, table: bool) -> None:
         print("preview: %s" % p)
 
 
+def _peek_area(spec_path: Path) -> Optional[str]:
+    try:
+        area = json.loads(Path(spec_path).read_text(encoding="utf-8")).get("area")
+    except (OSError, ValueError, AttributeError):
+        return None  # load_spec reports missing or broken specs
+    return area if isinstance(area, str) else None
+
+
 def _load(root: Path, ref: str, spec_path: Path):
-    area = ref.split("/")[0]
+    game, asset = store.split_ref(ref)
     cfg = load_config(root)
-    area_md = store.area_style_path(root, area)
-    if not area_md.is_file():
+    game_md = store.game_style_path(root, game, asset)
+    if not game_md.is_file():
+        raise StyleError("no STYLE.md for game '%s' at %s" % (game, game_md))
+    area = _peek_area(spec_path)
+    area_md = store.area_style_path(root, game, area) if area else None
+    if area_md is not None and not area_md.is_file():
         raise StyleError("no STYLE.md for area '%s' at %s" % (area, area_md))
-    style = load_style(store.game_style_path(root), area_md)
+    style = load_style(game_md, area_md)
     spec = load_spec(spec_path, style)
     return cfg, style, spec
 
@@ -55,14 +67,14 @@ def cmd_build(root: Path, ref: str) -> int:
     cfg, style, spec = _load(root, ref, paths.spec)
     vocab = load_vocab(spec.builder)
     job = _job("build", spec, style, vocab, ref, paths.out,
-               store.tiles_dir(root, ref.split("/")[0]), paths.manifest)
+               store.tiles_dir(root, store.split_ref(ref)[0]), paths.manifest)
     _print_result(run_blender(cfg, job), table=True)
     return 0
 
 
 def cmd_sample(root: Path, ref: str, variants: List[str]) -> int:
     paths = store.asset_paths(root, ref)
-    area = ref.split("/")[0]
+    game = store.split_ref(ref)[0]
     loaded = []
     for v in variants:  # validate everything before starting Blender
         vp = Path(v)
@@ -72,7 +84,7 @@ def cmd_sample(root: Path, ref: str, variants: List[str]) -> int:
     for stem, cfg, style, spec in loaded:
         out = paths.samples / stem
         job = _job("sample", spec, style, load_vocab(spec.builder), ref, out,
-                   store.tiles_dir(root, area), out / "manifest.json")
+                   store.tiles_dir(root, game), out / "manifest.json")
         print("sample: %s" % stem)
         _print_result(run_blender(cfg, job), table=False)
     return 0
@@ -123,7 +135,7 @@ def cmd_deliver(root: Path, ref: str, dry_run: bool) -> int:
         client = OpenCloud(cfg.api_key, cfg.creator_type, cfg.creator_id)
         ids = deliver_uploads(manifest, paths, client)
     paths.assemble.parent.mkdir(parents=True, exist_ok=True)
-    paths.assemble.write_text(assemble.generate_luau(manifest, ids, ref.split("/")[1]))
+    paths.assemble.write_text(assemble.generate_luau(manifest, ids, store.split_ref(ref)[1]))
     print("wrote %s" % paths.assemble)
     print("Run it via the Studio MCP run-code tool, or paste it into Studio's Command Bar.")
     return 0

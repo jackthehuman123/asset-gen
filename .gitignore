@@ -1,10 +1,12 @@
 .venv/
 .env
-assets/**/out/
-assets/**/samples/
-assets/**/_tiles/
+games/**/out/
+games/**/samples/
+games/**/_tiles/
 __pycache__/
 blueprint/spike/blender/out*/
+blueprint/out_*/
 *.log
 tools/
 .superpowers/
+RESTRUCTURE.md

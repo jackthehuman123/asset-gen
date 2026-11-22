@@ -1,0 +1,178 @@
+{
+  "brief": "A recognisable, photoreal Flatiron Building (D. H. Burnham, 1902, Renaissance Revival limestone and glazed terracotta) in modern-day New York City: the narrow 22-storey wedge where Broadway meets Fifth Avenue, with today's glass storefronts, the one-storey glass 'cowcatcher' retail annex at the tip, awnings, window AC units, street trees, a lamppost and a subway entrance.",
+  "design_notes": [
+    "Footprint: right-triangle wedge; Fifth Avenue (west) straight north, Broadway (east) at 25 degrees, 22nd Street (south) 85 studs; tip rounded to 6.5 studs. 1 stud ~ 0.28 m.",
+    "Three-part composition. Base: ground-floor storefronts between V-jointed rusticated limestone piers, then floors 2-4 fully rusticated with vertical block joints and keystoned windows, capped by a projecting balcony (modillions, corona, balustrade). Shaft: 14 floors of window pairs with pilaster strips, every window framed by jambs, a chamfered hood and a projecting sill that runs on as a string course at every floor; recessed sooted spandrel panels with raised relief; wreath medallions on the piers at two band floors; oriels bulge 1.5 studs on both long sides. Crown: floor 19, then a double-height arcade of round arches on colonnettes with archivolts, keystones and wreaths, under a sooted frieze, dentils, modillion brackets and a 5-stud corona.",
+    "Realism comes from materials, bevels and depth: chamfered edges on piers, blocks, sills, hoods and courses; glass recessed ~0.55 studs behind the window surround with dark sash frames and meeting rails; per-block colour variation (limestone/limestone_b, terracotta/terracotta_b); soot finishes on every recessed face under a projection; darker street-level stone.",
+    "Material scale: big stone/terracotta tags use the pipeline's seamless tiles (studs_per_tile from the game STYLE.md, 1024 px per tile) so pitting, mottle and rain streaks read at first-person range; cornice and props are uniquely baked so crevice grime shows.",
+    "Street today: cowcatcher annex (glass-and-metal, mullion grid, recessed doors, sign band, awnings with valances), recessed storefront doors, sidewalk slabs with gum spots, granite curb, tree pits with trees, a lamppost, and a green subway-entrance railing in the plaza.",
+    "Finishes and wear are not in this spec: they come by name from worlds/nyc/STYLE.md and worlds/nyc/areas/flatiron_district/STYLE.md. Tags over the triangle budget are split by height into numbered chunks automatically."
+  ],
+  "style": {
+    "game": "worlds/nyc/STYLE.md",
+    "area": "worlds/nyc/areas/flatiron_district/STYLE.md"
+  },
+  "flatiron": {
+    "south_width": 85,
+    "depth": 182,
+    "tip_radius": 3.25,
+    "ground_floor": 18,
+    "base_floors": 3,
+    "base_floor_height": 12,
+    "shaft_floors": 14,
+    "shaft_floor_height": 11.6,
+    "shaft_split": [
+      5,
+      5,
+      4
+    ],
+    "crown_floor_height": 11.6,
+    "arcade_height": 20,
+    "cornice": {
+      "height": 7,
+      "projection": 5.0,
+      "bracket_pitch": 3.0
+    },
+    "parapet": 2.2,
+    "penthouse": {
+      "inset": 5,
+      "max_y": 112,
+      "height": 14
+    },
+    "bay_target": 9.3,
+    "pier": 2.4,
+    "corner_pier": 3.4,
+    "mullion": 1.0,
+    "sill_up": 3.2,
+    "head_down": 1.4,
+    "rustication": {
+      "channel": 0.6,
+      "depth": 0.6
+    },
+    "oriels": {
+      "depth": 1.5,
+      "west": [
+        [
+          2,
+          3
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          10,
+          11
+        ],
+        [
+          14,
+          15
+        ]
+      ],
+      "east": [
+        [
+          2,
+          3
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          10,
+          11
+        ],
+        [
+          14,
+          15
+        ]
+      ]
+    },
+    "storefront": {
+      "sign_band": [
+        13.4,
+        16.4
+      ],
+      "transom": 10.2,
+      "awning_drop": 2.2,
+      "awning_projection": 4.2
+    },
+    "sidewalk": {
+      "width": 16,
+      "from_y": 60,
+      "plaza_reach": 72,
+      "plaza_halfwidth": 26,
+      "slab": 5.0,
+      "curb_drop": 0.6
+    },
+    "annex": {
+      "offset": 5.0,
+      "back": 24,
+      "height": 14.6,
+      "glass_top": 11.5,
+      "transom": 8.8,
+      "pitch": 2.6
+    },
+    "band_floors": [
+      0,
+      12
+    ],
+    "details": {
+      "trees": 6,
+      "gum_spots": 450,
+      "chamfer": 0.14
+    }
+  },
+  "damage": {
+    "seed": 11,
+    "awning_fraction": 0.6,
+    "ac_units": 22
+  },
+  "parts": {
+    "ground_stone": "limestone_street",
+    "ground_soot": "limestone_soot",
+    "base_stone": "indiana_limestone",
+    "base_stone_b": "limestone_b",
+    "base_soot": "limestone_soot",
+    "balcony": "indiana_limestone",
+    "shaft_wall": "glazed_terracotta",
+    "shaft_wall_b": "terracotta_b",
+    "shaft_soot": "terracotta_soot",
+    "crown_wall": "glazed_terracotta",
+    "crown_soot": "terracotta_soot",
+    "cornice": "glazed_terracotta",
+    "sash": "window_sash",
+    "glass": "storefront_glass",
+    "mullions": "aluminum_mullion",
+    "signage": "cast_iron_black",
+    "awnings": "awning_canvas",
+    "ac_units": "ac_housing",
+    "annex_frame": "cast_iron_black",
+    "sidewalk": "sidewalk_concrete",
+    "curb": "curb_granite",
+    "gum": "gum_spots",
+    "tree_pits": "tree_pit_soil",
+    "street_iron": "street_iron_green",
+    "tree_trunks": "tree_bark",
+    "foliage": "foliage"
+  },
+  "tiled": [
+    "ground_stone",
+    "ground_soot",
+    "base_stone",
+    "base_stone_b",
+    "base_soot",
+    "balcony",
+    "shaft_wall",
+    "shaft_wall_b",
+    "shaft_soot",
+    "crown_wall",
+    "crown_soot",
+    "sash",
+    "glass",
+    "sidewalk",
+    "curb",
+    "gum",
+    "tree_pits"
+  ]
+}

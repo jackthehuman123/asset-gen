@@ -1,0 +1,127 @@
+{
+  "brief": "A small abandoned village shrine at the end of a lane, in the same abandoned Japanese village as the houses. Nobody has tended it for years: it is the most overgrown, mossy and decayed thing in the village.",
+
+  "design_notes": [
+    "Silhouette: the opposite of the houses. The houses are wide, low and horizontal; the shrine is tall and narrow. A 13-stud torii stands at the lane end, and a small raised hokora sits behind it on a stone plinth. Its steep roof and crossed chigi point upward, so the eye travels torii, path, roof, sky.",
+    "Hokora: a small wooden sanctuary on short posts above a dry-stacked stone plinth, with a narrow veranda, a steep wooden stair and a low railing. Charred yakisugi boards on the sides and back and weathered cedar lattice doors at the front. One door leaf has come off its track and leans askew across the doorway, so a black gap shows into the interior.",
+    "Roof: steep (55 degrees at the ridge) with a concave curve that flattens toward deep eaves, and the front slope runs further out over the stair (a nagare-style asymmetry, abstracted). It is thick layered shingle with visible courses, not kawara tile, which separates it from the houses at a glance. Crossed chigi boards sit at both gable ends and round katsuogi logs lie across the ridge.",
+    "Torii: plain unpainted weathered cedar. Any vermilion is long gone, and keeping it grey-brown stays inside the muted palette. It has an upturned top beam (kasagi), a tie beam (nuki), a short centre strut, and squat stone footings.",
+    "Path: uneven flagstones, a few sunk, tilted or missing, then three worn stone steps up to the plinth. A pair of abstract stone lanterns flanks the path, and a pair of abstract guardian blocks (simple crouched stone masses, not real komainu) sits by the steps. A slatted wooden offering box stands at the foot of the stair.",
+    "Shimenawa: a twisted straw rope across the torii under the tie beam. It has snapped on one side, so one end dangles. A few paper shide hang from it, stained and torn.",
+    "Decay, the heaviest in the village: the roof ridge sags and one front eave corner droops; katsuogi are missing (one lies on the plinth); one chigi is snapped; the top beam of the torii is slightly twisted; one lantern has lost its cap, which lies in the grass; one guardian block has toppled; plinth stones are displaced, one has fallen out; lattice bars are snapped. Moss cushions grow as real geometry on the roof, plinth, steps, lantern tops and the torii beam, on top of the moss wear layer, which is set higher than on the houses.",
+    "Two new finishes only: mossy_stone (the plinth, path and steps; the same stone recipe, shifted green-grey) and moss (the cushions; dark olive, matte, lumpy). Everything else reuses the house finishes by name.",
+    "Palette: grey-brown cedar, charcoal yakisugi, dark bark roof, blue-grey ridge cap, grey and green-grey stone, olive-black moss, dirty off-white paper."
+  ],
+
+  "shrine": {
+    "footprint": [10, 14],
+    "path_start_y": -5.4,
+    "plinth": { "width": 6.4, "y0": 1.0, "y1": 7.0, "height": 1.2, "course_height": 0.6 },
+    "steps": { "count": 3, "width": 2.6 },
+    "body": { "width": 4.0, "y0": 3.2, "y1": 6.2, "stilt": 1.1, "wall_height": 3.2, "post_size": 0.36 },
+    "veranda_depth": 0.6,
+    "stair_steps": 4,
+    "roof": {
+      "pitch_top_deg": 55,
+      "pitch_eave_deg": 18,
+      "eave_back": 1.1,
+      "eave_front": 2.4,
+      "gable_overhang": 0.9,
+      "thickness": 0.45,
+      "course": 0.42,
+      "chigi_rise": 1.3,
+      "katsuogi": 5
+    },
+    "torii": {
+      "y": -5.6,
+      "post_span": 7.2,
+      "post_radius": 0.42,
+      "nuki_z": 9.8,
+      "kasagi_z": 12.6,
+      "kasagi_length": 10.6,
+      "kasagi_upturn": 0.55
+    },
+    "lanterns_x": 4.1,
+    "lanterns_y": -2.0,
+    "guardians_x": 2.3,
+    "guardians_y": -0.9
+  },
+
+  "damage": {
+    "seed": 41,
+    "roof_sag": 0.35,
+    "eave_droop": 0.45,
+    "missing_katsuogi": 0.3,
+    "broken_lattice": 0.3,
+    "missing_flagstones": 0.12,
+    "sunk_flagstones": 0.3,
+    "missing_rail_posts": 0.25,
+    "missing_shide": 0.35,
+    "displaced_stones": 0.25,
+    "missing_boards": 0.06,
+    "torii_kasagi_twist_deg": 2.0,
+    "fallen_lantern_cap": true,
+    "toppled_guardian": true,
+    "fallen_door": true,
+    "snapped_rope": true,
+    "moss_clumps": 150
+  },
+
+  "parts": {
+    "plinth": "mossy_stone",
+    "path": "mossy_stone",
+    "statuary": "stone",
+    "frame": "weathered_cedar",
+    "walls": "yakisugi",
+    "doors": "weathered_cedar",
+    "roof": "roof_boards",
+    "roof_trim": "weathered_cedar",
+    "ridge": "kawara",
+    "torii": "weathered_cedar",
+    "rope": "weathered_cedar",
+    "shide": "aged_plaster",
+    "offering_box": "yakisugi",
+    "moss": "moss"
+  },
+
+  "finishes": {
+    "yakisugi": {
+      "type": "wood", "base": "#2B2622", "grain": "#0F0D0C", "grain_scale": 1.4, "grain_contrast": 0.9,
+      "roughness": 0.85, "bump": 0.25, "edge_color": "#5C4A3A"
+    },
+    "weathered_cedar": {
+      "type": "wood", "base": "#6E6253", "grain": "#3A3129", "grain_scale": 1.0, "grain_contrast": 0.8,
+      "roughness": 0.8, "bump": 0.2, "edge_color": "#958673"
+    },
+    "roof_boards": {
+      "type": "wood", "base": "#3A3129", "grain": "#1C1713", "grain_scale": 1.0, "grain_contrast": 0.7,
+      "roughness": 0.85, "bump": 0.15
+    },
+    "aged_plaster": {
+      "type": "paint", "color": "#C9C0AE", "roughness": 0.92, "orange_peel": 0.08
+    },
+    "kawara": {
+      "type": "paint", "color": "#454C53", "roughness": 0.5, "orange_peel": 0.03,
+      "skip_wear": ["streaks"]
+    },
+    "stone": {
+      "type": "stone", "color_a": "#6F6B63", "color_b": "#4E4B45", "mortar": "#2E2C28",
+      "cell_scale": 0.9, "roughness": 0.85, "bump": 0.4
+    },
+    "mossy_stone": {
+      "type": "stone", "color_a": "#66675A", "color_b": "#44473A", "mortar": "#262A1C",
+      "cell_scale": 0.8, "roughness": 0.9, "bump": 0.45
+    },
+    "moss": {
+      "type": "paint", "color": "#353F22", "roughness": 0.97, "orange_peel": 0.6,
+      "skip_wear": ["edge", "streaks"]
+    }
+  },
+
+  "wear": {
+    "edge": 0.6,
+    "grime": 0.8,
+    "moss": { "amount": 0.95, "color": "#38421F" },
+    "streaks": { "amount": 0.8, "color": "#2F2B22" }
+  }
+}

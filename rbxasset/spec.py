@@ -20,7 +20,7 @@ _PY_TYPES = {
     "object": (dict,), "list": (list,), "string": (str,),
 }
 _TOP_KEYS = {"builder", "brief", "design_notes", "seed", "params", "parts",
-             "finish_overrides", "wear", "decals"}
+             "finish_overrides", "wear", "decals", "area"}
 
 
 class SpecError(Exception):
@@ -95,6 +95,8 @@ def load_spec(spec_path: Path, style: Style) -> ResolvedSpec:
         if not isinstance(raw.get(key, want()), want):
             raise SpecError("spec key '%s' must be a JSON %s, got %r"
                             % (key, "list" if want is list else "object", raw[key]))
+    if "area" in raw and not isinstance(raw["area"], str):
+        raise SpecError("spec key 'area' must be a string, got %r" % (raw["area"],))
     seed = raw.get("seed", 0)
     if isinstance(seed, bool) or not isinstance(seed, int):
         raise SpecError("spec key 'seed' must be an integer, got %r" % (seed,))

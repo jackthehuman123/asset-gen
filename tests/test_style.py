@@ -78,3 +78,11 @@ def test_missing_style_file_is_style_error(tmp_path):
     g.write_text(md({}))
     with pytest.raises(StyleError, match="no STYLE.md"):
         load_style(g, tmp_path / "missing.md")
+
+
+def test_area_is_optional(tmp_path):
+    g = tmp_path / "g.md"
+    g.write_text(md({"finishes": {"a": {"type": "paint"}}, "wear": {"edge": 0.1}}))
+    s = load_style(g)
+    assert s.intent_area == "" and s.finishes == {"a": {"type": "paint"}}
+    assert s.wear == {"edge": 0.1}

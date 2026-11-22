@@ -59,17 +59,16 @@ def png_rgba_pixel(path, x, y):
 @pytest.mark.blender
 def test_cabinet_build_end_to_end(tmp_path):
     root = tmp_path / "proj"
-    (root / "game" / "areas" / "farm").mkdir(parents=True)
+    (root / "games" / "farm").mkdir(parents=True)
     # low budgets keep the test fast; preview_* keys are optional render knobs
     game = (FIX / "game_STYLE.md").read_text().replace(
         '"camera": "first_person",',
         '"camera": "first_person", "budgets": {"texture_big": 256, "texture_small": 128,'
         ' "preview_samples": 8, "preview_res": [400, 300]},')
-    (root / "game" / "STYLE.md").write_text(game)
-    shutil.copy(FIX / "area_STYLE.md", root / "game" / "areas" / "farm" / "STYLE.md")
+    (root / "games" / "farm" / "STYLE.md").write_text(game)
     (root / "rbxasset.config.json").write_text(
         (Path(__file__).parent.parent / "rbxasset.config.json").read_text())
-    adir = root / "assets" / "farm" / "cabinet"
+    adir = root / "games" / "farm" / "cabinet"
     adir.mkdir(parents=True)
     shutil.copy(FIX / "cabinet_spec.json", adir / "spec.json")
 

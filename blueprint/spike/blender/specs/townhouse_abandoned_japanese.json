@@ -1,0 +1,124 @@
+{
+  "brief": "A narrow, deep, two-storey machiya-style street house (shop below, low living floor above) in the same abandoned Japanese village as the farmhouses and the shrine. Abandoned for 5+ years.",
+
+  "design_notes": [
+    "Silhouette: the opposite of the existing houses. They are low, wide and single-storey; this one is narrow at the street (12 studs) and deep (22 studs), with two storeys stacked under a tall front. A shallow pent roof (hisashi) splits the front into two clear bands, so it reads as a 'town' building rather than a farmhouse even in fog.",
+    "Ground floor = the old shop. A dense vertical wooden lattice (koshi) fills the left bay over a low charred-cedar (yakisugi) base. The middle bay holds two sliding lattice doors; the right leaf is half slid open onto a black doorway. The right bay is plain yakisugi boarding. Everything sits in deep shadow under the hisashi, so the shopfront feels recessed.",
+    "Hisashi: a narrow tiled pent roof on cantilevered brackets and an outer beam, with exposed rafters underneath (the player sees the underside at eye height). It sags in the middle; the left bracket has snapped, so the left end droops and has shed tiles onto the street.",
+    "Upper floor: low, plastered and set back behind the hisashi, with one wide mushiko-mado: thick plaster-coated vertical bars over a dark slot. Two bars have crumbled to their wooden cores and one is gone. Small plastered firewall wings (udatsu) stand at both ends of the upper floor, a strong town-house marker; the left one has lost half its little cap.",
+    "Main roof: gabled with the ridge parallel to the street, so the gable ends are on the sides (the usual hirairi machiya layout) and the long front slope faces the street. Tiles are hongawara-style: wide, shallow concave pan tiles with narrow convex cover tiles over the seams, laid in visible stepped courses of about 1.1-stud tiles with a thicker lower lip and round end discs at the eaves. This replaces the old log-like kawara.",
+    "Props: a projecting blank shop sign hanging askew from one broken hanger (no text), a collapsed bench in front of the lattice, and a lidded rain barrel with rusted hoops.",
+    "Decay, 5+ years: the ridge sags, and the front-right eave droops. There are patches of missing and slipped tiles on both slopes and on the hisashi, broken tiles on the ground, snapped, missing and pushed-in koshi bars, missing and broken siding boards, plaster spalled off the side walls to show the lath, and the half-open door is off its track. Moss and grime come only from the procedural wear layers (no moss geometry), with the grime and streaks pushed higher than on the houses so the wood never looks clean.",
+    "Finishes: everything reuses the house finishes by name. There is one new finish, rusted_iron (sign rod, hangers, barrel hoops), in a dark, muted rust.",
+    "Palette: charcoal yakisugi, grey-brown cedar, stained off-white plaster, blue-grey tiles, grey stone, dull rust, green-black moss."
+  ],
+
+  "townhouse": {
+    "width": 12,
+    "depth": 22,
+    "sill_height": 0.45,
+    "wainscot_top": 4.2,
+    "mid_beam": [8.9, 9.4],
+    "wall_top": 14.1,
+    "plate_top": 14.5,
+    "post_size": 0.6,
+    "upper_setback": 0.55,
+    "front_posts": [-1.0, 3.4],
+    "kamoi": 7.6,
+    "koshi_bay": [-5.7, -1.3],
+    "koshi_base_top": 1.6,
+    "koshi_pitch": 0.22,
+    "koshi_pushed": [11, 12, 13],
+    "door_bay": [-0.7, 3.1],
+    "door_open": 0.55,
+    "board_bay": [3.7, 5.7],
+    "mushiko": { "u": [-3.3, 3.3], "v": [11.0, 12.7], "bar_pitch": 0.6, "crumbled": [2, 7], "missing": [9] },
+    "udatsu": { "x": 6.22, "y": [-10.65, -11.95], "top": 12.9 },
+    "hisashi": { "z_wall": 9.85, "projection": 2.7, "pitch_deg": 16, "overhang_x": 0.4 },
+    "roof": { "pitch_deg": 22, "eave_front": 1.9, "eave_back": 1.4, "gable_overhang": 0.8, "slab": 0.35 },
+    "tiles": { "length": 1.12, "course": 1.0, "column": 1.0, "concavity": 0.09, "pan_thick": [0.05, 0.11],
+               "raise": 0.06, "cover_radius": [0.17, 0.19], "eave_overhang": 0.12, "disc_radius": 0.22 },
+    "sides": {
+      "left_ground":  ["wall", "wall", "window", "wall", "wall", "wall"],
+      "left_upper":   ["wall", "spall", "wall", "wall", "window", "wall"],
+      "right_ground": ["wall", "wall", "wall", "window", "wall", "wall"],
+      "right_upper":  ["wall", "wall", "spall", "wall", "wall", "wall"]
+    },
+    "back_ground": ["wall", "window", "wall"],
+    "back_upper": ["wall", "window", "wall"]
+  },
+
+  "damage": {
+    "seed": 23,
+    "roof_sag": 0.5,
+    "eave_droop": 0.35,
+    "hisashi_sag": 0.25,
+    "hisashi_droop": 0.55,
+    "roof_holes": {
+      "tiles_front": [[0.32, 0.5, 1.5], [0.78, 0.15, 1.0]],
+      "tiles_back": [[0.62, 0.35, 1.8]],
+      "tiles_hisashi": [[0.08, 0.2, 1.3]]
+    },
+    "missing_tiles": 0.015,
+    "slipped_tiles": 0.06,
+    "missing_boards": 0.08,
+    "broken_boards": 0.12,
+    "broken_lattice": 0.22,
+    "fallen_tile_pieces": 6
+  },
+
+  "parts": {
+    "foundation": "stone",
+    "frame": "weathered_cedar",
+    "siding": "yakisugi",
+    "plaster": "aged_plaster",
+    "lattice": "weathered_cedar",
+    "doors": "weathered_cedar",
+    "roof_base": "roof_boards",
+    "tiles_front": "kawara",
+    "tiles_back": "kawara",
+    "tiles_hisashi": "kawara",
+    "ridge": "kawara",
+    "eaves": "weathered_cedar",
+    "props": "weathered_cedar",
+    "hardware": "rusted_iron"
+  },
+
+  "finishes": {
+    "yakisugi": {
+      "type": "wood", "base": "#2B2622", "grain": "#0F0D0C", "grain_scale": 1.4, "grain_contrast": 0.9,
+      "roughness": 0.85, "bump": 0.25, "edge_color": "#5C4A3A"
+    },
+    "weathered_cedar": {
+      "type": "wood", "base": "#6E6253", "grain": "#3A3129", "grain_scale": 1.0, "grain_contrast": 0.8,
+      "roughness": 0.8, "bump": 0.2, "edge_color": "#958673"
+    },
+    "roof_boards": {
+      "type": "wood", "base": "#3A3129", "grain": "#1C1713", "grain_scale": 1.0, "grain_contrast": 0.7,
+      "roughness": 0.85, "bump": 0.15
+    },
+    "aged_plaster": {
+      "type": "paint", "color": "#C9C0AE", "roughness": 0.92, "orange_peel": 0.08
+    },
+    "kawara": {
+      "type": "paint", "color": "#454C53", "roughness": 0.5, "orange_peel": 0.03,
+      "skip_wear": ["streaks"]
+    },
+    "stone": {
+      "type": "stone", "color_a": "#6F6B63", "color_b": "#4E4B45", "mortar": "#2E2C28",
+      "cell_scale": 0.9, "roughness": 0.85, "bump": 0.4
+    },
+    "rusted_iron": {
+      "type": "metal", "color": "#3A3835", "roughness": 0.6, "brushed": 0.2,
+      "rust": 0.85, "rust_color": "#4A3324", "skip_wear": ["moss"]
+    }
+  },
+
+  "wear": {
+    "edge": 0.65,
+    "grime": 0.85,
+    "water_stains": 0.35,
+    "moss": { "amount": 0.75, "color": "#3B4526" },
+    "streaks": { "amount": 0.85, "color": "#352E25" }
+  }
+}

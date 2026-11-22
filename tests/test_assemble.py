@@ -75,7 +75,7 @@ def test_strings_escaped():
 
 
 def test_deliver_dry_run_writes_script_without_network(tmp_path, monkeypatch):
-    a = tmp_path / "assets" / "house" / "cabinet"
+    a = tmp_path / "games" / "house" / "cabinet"
     (a / "out").mkdir(parents=True)
     shutil.copy(str(FIX / "cabinet_manifest.json"), str(a / "out" / "manifest.json"))
     monkeypatch.delenv("ROBLOX_API_KEY", raising=False)

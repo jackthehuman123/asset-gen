@@ -10,7 +10,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 LOCKED_KEYS = ("camera", "studs_per_tile", "budgets", "lighting")
 LIGHTING_PRESETS = ("bright_interior", "abandoned_interior", "overcast_exterior")
@@ -58,9 +58,9 @@ def _read(path: Path) -> dict:
     return parse_style_md(Path(path).read_text(encoding="utf-8"))
 
 
-def load_style(game_md: Path, area_md: Path) -> Style:
+def load_style(game_md: Path, area_md: Optional[Path] = None) -> Style:
     game = _read(game_md)
-    area = _read(area_md)
+    area = _read(area_md) if area_md is not None else {}
     for key in LOCKED_KEYS:
         if key in area:
             raise StyleError(

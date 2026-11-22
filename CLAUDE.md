@@ -2,7 +2,12 @@ These rules are for the asset pipeline. They do not apply under `tools/`, which 
 
 # rbxasset asset pipeline
 
-The creator briefs an asset in words. You write a JSON spec, headless Blender builds it (`rbxasset`), the pipeline uploads it through Open Cloud, and an assemble script places it in Studio. To run a design session, use the skill in `.claude/skills/asset-pipeline/SKILL.md`.
+The creator briefs an asset in words. You write a JSON spec, headless Blender builds it (`rbxasset`), the pipeline uploads it through Open Cloud, and an assemble script places it in Studio. To run a design session, use `/make <game> <asset>` (skill in `.claude/skills/make/SKILL.md`, which follows `.claude/skills/asset-pipeline/SKILL.md`). `/test <asset> <style>` tries an asset in the `blueprint/` lane without touching any game.
+
+## Layout
+
+- `games/<game>/`: official runs. Each game has its own `STYLE.md`, `CLAUDE.md`, `REQUESTS.md`, optional `GAME.md`, optional `areas/<area>/STYLE.md`, and its assets (`<asset>/spec.json`, `out/`). Agents working inside a game never generate assets; they file requests in `REQUESTS.md`. Per-game `.claude/settings.json` denies other games and the pipeline.
+- `blueprint/`: test runs (`out_<asset>/`, gitignored) and spikes.
 
 ## Setup
 
@@ -12,7 +17,7 @@ The creator briefs an asset in words. You write a JSON spec, headless Blender bu
 
 ## Commands
 
-`.venv/bin/python -m rbxasset build|sample|new|deliver [--dry-run] <area>/<asset>`. Exit codes: 0 ok, 2 validation or config error, 1 build or upload failure.
+`.venv/bin/python -m rbxasset build|sample|new|deliver [--dry-run] <game>/<asset>`. Exit codes: 0 ok, 2 validation or config error, 1 build or upload failure.
 
 ## Tests
 

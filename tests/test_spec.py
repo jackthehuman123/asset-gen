@@ -142,3 +142,11 @@ def test_malformed_value_types_are_spec_errors(style, tmp_path, mutate, needle):
 def test_missing_spec_file(style, tmp_path):
     with pytest.raises(SpecError, match="run `new` first"):
         load_spec(tmp_path / "nope.json", style)
+
+
+def test_area_key_allowed_and_must_be_string(style, tmp_path):
+    p = write(tmp_path, "cabinet_spec.json", lambda d: d.update(area="farm"))
+    load_spec(p, style)
+    p = write(tmp_path, "cabinet_spec.json", lambda d: d.update(area=3))
+    with pytest.raises(SpecError, match="area"):
+        load_spec(p, style)
