@@ -4,9 +4,12 @@ Runs inside Blender.
 Coordinates: X along the front, Y depth (front at -Y), Z up. 1 unit = 1 stud.
 The walls are centered on x/y; the ground is z=0.
 
-Kawara roof: each tile column alternates a concave pan row (half-cylinder, open side
-up, r 0.3, seated in the roof slab) and a convex cover row (half-cylinder, r 0.16)
-over the joint between two pans, 0.6 studs per pan+cover pair.
+Kawara roof: each tile column alternates a concave pan row (wide shallow arc, half-width
+0.27, sagitta 0.08, open side up) and a convex cover row (narrow tall arc, half-width 0.13,
+height 0.15) straddling the joint between two pans, 0.6 studs per pan+cover pair.
+Tiles are laid in courses ~1.1 long down the slope; each tile rises toward its lower
+end and ends in a lip, so it laps over the course below and course lines read across
+the slope.
 """
 import math
 import random
@@ -22,10 +25,15 @@ TAGS = ("foundation", "frame", "siding", "plaster", "lattice", "doors", "boards"
         "engawa", "roof_base", "tiles_front", "tiles_back", "ridge", "eaves", "gable")
 
 TILE_PITCH = 0.6          # one pan + one cover
-PAN_R, COVER_R = 0.3, 0.16
-PAN_SEGS, COVER_SEGS = 8, 6   # radial segments per half-cylinder
-PAN_SINK = 0.08           # how far a pan's belly sits into the slab
-TILE_SEG = 2.5            # tile segment length along the slope
+PAN_HW, PAN_SAG = 0.27, 0.08      # pan half-width, depth of its dish
+COVER_HW, COVER_H = 0.13, 0.15    # cover half-width, height of its crown
+PAN_SEGS, COVER_SEGS = 3, 4       # profile segments across a tile (shallow pan needs few)
+COURSE = 1.1              # target course spacing along the slope
+TILE_LEN = 1.35           # tile length (overlaps the course below by TILE_LEN - COURSE)
+STEP = 0.12               # a tile's lower end sits this much higher than its upper end
+LIP = 0.15                # lip face depth at a tile's lower end
+EAVE_LIP = 0.35           # eave tiles: deeper cap hiding the slab edge
+TILE_BASE = 0.02          # pan bottom above the slab top
 SLAB_T = 0.4
 
 
@@ -89,34 +97,46 @@ class _House:
         self.parts[tag].append(o)
         return o
 
-    def half_tube(self, tag, name, axis_mid, d, n, length, r_up, r_down, segs, concave, cap):
-        """Half-cylinder shell along d (down-slope), centered on axis_mid.
-        concave: lower half, faces point at the axis (a pan channel).
-        convex: upper half, faces point away from it (a cover).
-        cap: close the down-slope (eave) end with a half-disc."""
-        X = Vector((1, 0, 0))
-        sgn = -1.0 if concave else 1.0
-        verts = []
-        for s, r in ((-length / 2, r_up), (length / 2, r_down)):
-            for i in range(segs + 1):
+    def tile(self, tag, name, top, X, d, n, concave, eave):
+        """One kawara tile. top: point on the profile axis at the tile's upper end.
+        Pan (concave): a shallow dish, edges up; cover (convex): a narrow crown.
+        The tile rises by STEP toward its lower end, which closes in a lip face
+        (pans: a band; covers: a cap down past the chord). Only faces that can be
+        seen are built: top surface + lip."""
+        segs = PAN_SEGS if concave else COVER_SEGS
+        hw = PAN_HW if concave else COVER_HW
+        lip = EAVE_LIP if eave else LIP
+        prof = []
+        for i in range(segs + 1):
+            if concave:
+                u = -hw + 2 * hw * i / segs
+                h = PAN_SAG * (u / hw) ** 2
+            else:
                 t = math.pi * i / segs
-                verts.append(axis_mid + d * s + (X * math.cos(t) + n * (sgn * math.sin(t))) * r)
-        faces = []
+                u, h = -hw * math.cos(t), COVER_H * math.sin(t)
+            prof.append((u, h))
+        up = [top + X * u + n * h for u, h in prof]
+        low_off = d * TILE_LEN + n * STEP
+        low = [v + low_off for v in up]
+        verts = up + low
         k = segs + 1
-        for i in range(segs):
-            q = [i, i + 1, k + i + 1, k + i]
+        faces = []
+
+        def face(q, want):
             a, b, c = verts[q[0]], verts[q[1]], verts[q[2]]
-            nrm = (b - a).cross(c - a)
-            outward = (verts[i] + verts[i + 1]) / 2 - (axis_mid - d * (length / 2))
-            if (nrm.dot(outward) > 0) == concave:  # pans face the axis, covers face away
-                q.reverse()
+            if (b - a).cross(c - a).dot(want) < 0:
+                q = q[::-1]
             faces.append(q)
-        if cap:
-            ring = list(range(k, 2 * k))
-            a, b, c = verts[ring[0]], verts[ring[1]], verts[ring[2]]
-            if (b - a).cross(c - a).dot(d) < 0:
-                ring.reverse()
-            faces.append(ring)
+
+        for i in range(segs):  # top surface, facing up off the roof
+            face([i, i + 1, k + i + 1, k + i], n)
+        if concave:  # lip band hanging below the lower edge
+            verts += [v - n * lip for v in low]
+            for i in range(segs):
+                face([k + i, k + i + 1, 2 * k + i + 1, 2 * k + i], d)
+        else:  # cap: crown arc + its two ends dropped below the chord
+            verts += [low[0] - n * lip, low[-1] - n * lip]
+            face([2 * k] + list(range(k, 2 * k)) + [2 * k + 1], d)
         return self.mesh_obj(tag, name, [tuple(v) for v in verts], faces)
 
     # -------------------------------------------------------------- walls
@@ -249,26 +269,32 @@ class _House:
             fc.box("frame", s * D / 4, TOP + R / 4, 0.25, 0.35, R / 2, 0.35)
 
     # -------------------------------------------------------------- roof
-    def tile_column(self, tag, name, ridge, d, n, slab_l, x, r, segs, concave):
-        """One column of overlapping tile segments down the slope; the eave tile is capped."""
+    def tile_column(self, tag, name, ridge, d, n, slab_l, x, concave):
+        """One column of tile courses down the slope; the eave tile is capped.
+        Courses are evenly spaced so the last one hangs just past the slab edge."""
         rng = self.rng
-        # pans: full radius at the up-slope end, so the next segment down tucks under;
-        # covers: full radius at the down-slope end, so it laps over the one below.
-        r_up, r_down = (r, r * 0.9) if concave else (r * 0.9, r)
-        lift = SLAB_T / 2 + PAN_R - PAN_SINK  # axis height above the slab mid-plane
-        s, k = 0.3, 0
-        while s < slab_l - 0.2:
-            L_ = min(TILE_SEG + 0.15, slab_l - s)
-            last = s + TILE_SEG >= slab_l - 0.2
+        s0, s_end = 0.3, slab_l + 0.1
+        ncourse = max(1, int(math.ceil((s_end - s0 - TILE_LEN) / COURSE)) + 1)
+        step = (s_end - s0 - TILE_LEN) / max(1, ncourse - 1)
+        X0 = Vector((1, 0, 0))
+        base = SLAB_T / 2 + TILE_BASE + (0.0 if concave else PAN_SAG * 0.3)
+        for k in range(ncourse):
             if self.chance("missing_tiles"):
-                s += TILE_SEG
-                k += 1
                 continue
-            slip = rng.uniform(0.3, 1.2) if self.chance("slipped_tiles") else 0.0
-            mid = ridge + d * (s + L_ / 2 + slip) + n * lift + Vector((x, 0, 0))
-            self.half_tube(tag, "%s_%d" % (name, k), mid, d, n, L_, r_up, r_down, segs, concave, last)
-            s += TILE_SEG
-            k += 1
+            s = s0 + k * step
+            lift = 0.0
+            X, dd, nn = X0, d, n
+            # tiny per-tile jitter so the rows aren't machine-perfect
+            yaw = rng.uniform(-0.012, 0.012)
+            off = rng.uniform(-0.01, 0.01)
+            if self.chance("slipped_tiles"):
+                s += rng.uniform(0.25, 0.6)
+                lift = 0.05
+                yaw += rng.uniform(-0.08, 0.08)
+            R = Matrix.Rotation(yaw, 3, n)
+            X, dd = R @ X0, R @ d
+            top = ridge + d * s + n * (base + lift) + X0 * (x + off)
+            self.tile(tag, "%s_%d" % (name, k), top, X, dd, nn, concave, k == ncourse - 1)
 
     def roof(self):
         p, LX, PITCH, ZR = self.p, self.LX, self.PITCH, self.ZR
@@ -289,10 +315,10 @@ class _House:
             for c in range(ncols):
                 xp = -LX / 2 + TILE_PITCH / 2 + c * TILE_PITCH
                 self.tile_column(tiles_tag, "pan_%s_%02d" % (tiles_tag[6:], c), ridge, d, n, slab_l,
-                                 xp, PAN_R, PAN_SEGS, concave=True)
+                                 xp, concave=True)
                 if c < ncols - 1:  # cover over the joint between this pan and the next
                     self.tile_column(tiles_tag, "cover_%s_%02d" % (tiles_tag[6:], c), ridge, d, n, slab_l,
-                                     xp + TILE_PITCH / 2, COVER_R, COVER_SEGS, concave=False)
+                                     xp + TILE_PITCH / 2, concave=False)
             roof_objs += self.parts[tiles_tag][first:]
             # fascia along the eave + rafter ends under the eave
             eave_pt = ridge + d * slab_l

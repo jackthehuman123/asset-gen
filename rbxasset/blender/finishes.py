@@ -185,8 +185,17 @@ def make_finish(name, f, wear, ctx, tile=None):
         color = lerp_c(color, rgb("#000000"), m("MULTIPLY", m("SUBTRACT", mottle, 0.4), 0.12))
         if f.get("mottle"):
             patch = smooth(noise((1, 1, 1), 1.2, 4, 0.5), 0.3, 0.7)
-            color = lerp_c(color, rgb(f.get("mottle_color", "#7a6a55")),
-                           m("MULTIPLY", patch, 0.5 * f["mottle"]))
+            # age discoloration: a darker, yellowed version of the paint's own colour
+            # (a fixed grey-brown target read as green-grey mould on pale plaster)
+            if f.get("mottle_color"):
+                target = rgb(f["mottle_color"])
+            else:
+                yel = N.new("ShaderNodeVectorMath")
+                yel.operation = "MULTIPLY"
+                L.new(color, yel.inputs[0])
+                yel.inputs[1].default_value = (0.78, 0.68, 0.45)
+                target = yel.outputs[0]
+            color = lerp_c(color, target, m("MULTIPLY", patch, 0.5 * f["mottle"]))
         if f.get("cracks"):
             vc = N.new("ShaderNodeTexVoronoi")
             vc.feature = "DISTANCE_TO_EDGE"

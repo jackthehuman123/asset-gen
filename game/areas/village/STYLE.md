@@ -54,8 +54,11 @@ Abandoned rural Japanese village. Charred cedar below, stained plaster above, bl
       "color": "#C9C0AE",
       "roughness": 0.92,
       "orange_peel": 0.08,
-      "mottle": 0.5,
-      "cracks": 0.3
+      "mottle": 0.28,
+      "cracks": 0.3,
+      "skip_wear": [
+        "moss"
+      ]
     },
     "kawara": {
       "type": "paint",

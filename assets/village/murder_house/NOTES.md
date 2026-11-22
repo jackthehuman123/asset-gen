@@ -3,14 +3,17 @@
 ## Agent visual check
 Compared against blueprint/spike/blender/out_house and out_styled.
 
-- Kawara: partly passes. Gaps show bare roof boards and the ridge is correct, but the cover
-  tiles dominate and the flat pans between them are barely visible, so from the roof preview
-  it reads closer to rows of half-round logs than pan + cover tiles. It is denser and more
-  uniform than the spike render. Needs a builder change (wider pan gap or lower cover-tile
-  radius); not fixable in spec or STYLE.md. No cover tiles seen floating over bare roof.
-- Plaster: mottling is visible and there are faint cracks, but at mottle 0.5 the blotches are
-  high contrast grey-green and read a bit like camouflage/mold at distance. Consider lowering
-  mottle (about 0.3) and the tint if the creator agrees.
+- Kawara (rebuilt 2026-11-21, kawara v2): passes. The roof now reads as tiles, not logs:
+  wide shallow pans with narrow round covers over the joints, laid in ~1.1-stud courses that
+  each step up and end in a lip, so clear horizontal course lines run across the slope.
+  Missing tiles show bare roof boards; slipped tiles sit skewed and proud. Remaining nits:
+  the covers are fairly low-contrast against the pans in the flat preview light, so up close
+  it leans toward "stepped shingles with ribs" more than deeply sculpted kawara. Damage density
+  (missing + slipped + jitter) makes the roof look busy in the roof preview.
+- Plaster (rebuilt): the green-grey camouflage came mostly from moss, which tiled bakes apply
+  everywhere (no position info), not from mottle. aged_plaster now skips moss, mottle is 0.28,
+  and mottle darkens/yellows the plaster's own colour. It reads as pale aged plaster now; if
+  anything a bit clean at distance. Moss stays on the wainscot, base and roof.
 - Dust: on the console tops it reads as a muted film, not mold. Water stains and grime give
   a slight green cast on the drawer fronts that is a little mold-like.
 - Decal smear: first build was NOT visible (plane at y=-0.7 sat inside the proud drawer

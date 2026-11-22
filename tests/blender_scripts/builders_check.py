@@ -99,7 +99,23 @@ def t_house_budget():
     check(not over, over)
 
 
+def _tile_frame(p, side):
+    """(d, n): down-slope and roof-normal unit vectors for a roof side (-1 front, +1 back)."""
+    import math
+    a = math.radians(p["roof_pitch_deg"])
+    return Vector((0, side * math.cos(a), -math.sin(a))), Vector((0, side * math.sin(a), math.cos(a)))
+
+
+def _profile(o, d):
+    """Up-slope end ring of a tile's top surface, as [(x, vertex)] sorted by x."""
+    vs = [o.matrix_world @ v.co for v in o.data.vertices]
+    s0 = min(v.dot(d) for v in vs)
+    ring = sorted((v for v in vs if v.dot(d) < s0 + 0.07), key=lambda v: v.x)
+    return ring, vs
+
+
 def t_house_pan_cover():
+    import statistics
     _, res = build_house()
     for tag in ("tiles_front", "tiles_back"):
         names = [o.name for o in res.parts[tag]]
@@ -109,6 +125,52 @@ def t_house_pan_cover():
         check(pans > 0 and covers > 0, (tag, pans, covers))
         check(pans + covers == len(names), "%s has non pan/cover objects" % tag)
         check(abs(pans - covers) <= 0.15 * max(pans, covers), (tag, pans, covers))
+    # geometry, on an unsagged roof so the roof frame is exact
+    clear_scene()
+    p, res = build_house({"roof_sag": 0.0})
+    for side, tag in ((-1, "tiles_front"), (1, "tiles_back")):
+        d, n = _tile_frame(p, side)
+        cols = {}   # (kind, col) -> [(course, center x, s_up)]
+        widths = {"pan": [], "cover": []}
+        for o in res.parts[tag]:
+            kind, _side, col, course = o.name.split(".")[0].split("_")
+            ring, vs = _profile(o, d)
+            hs = [v.dot(n) for v in ring]
+            mid, edge = hs[len(hs) // 2], (hs[0] + hs[-1]) / 2
+            width = ring[-1].x - ring[0].x
+            widths[kind].append(width)
+            if kind == "pan":
+                check(edge - mid >= 0.04, ("pan top not concave", o.name, mid, edge))
+                check(edge - mid <= 0.35 * width, ("pan dish too deep (log)", o.name, mid, edge, width))
+            else:
+                check(mid - edge >= 0.08, ("cover top not convex", o.name, mid, edge))
+            # each tile rises toward its lower end (laps over the course below)
+            s1 = max(v.dot(d) for v in vs)
+            low_top = max(v.dot(n) for v in vs if v.dot(d) > s1 - 0.07)
+            check(low_top - max(hs) >= 0.06, ("no course step", o.name, low_top, max(hs)))
+            cols.setdefault((kind, int(col)), []).append((int(course), sum(v.x for v in ring) / len(ring),
+                                                          min(v.dot(d) for v in vs)))
+        pw, cw = statistics.median(widths["pan"]), statistics.median(widths["cover"])
+        print(tag, "pan width", pw, "cover width", cw)
+        check(pw > cw * 1.6, ("pan not wider than cover", pw, cw))
+        check(0.6 - cw >= 0.3, ("covers hide the pans", cw))
+        pan_x = {c: statistics.median(t[1] for t in v) for (k, c), v in cols.items() if k == "pan"}
+        cov_x = {c: statistics.median(t[1] for t in v) for (k, c), v in cols.items() if k == "cover"}
+        cs = sorted(pan_x)
+        for a, b in zip(cs, cs[1:]):
+            check(b == a + 1 and abs(pan_x[b] - pan_x[a] - 0.6) < 0.03, ("pan pitch", a, b, pan_x[a], pan_x[b]))
+        for c, x in cov_x.items():
+            check(abs(x - (pan_x[c] + 0.3)) < 0.04, ("cover not over joint", c, x, pan_x[c]))
+        # courses: ~1.0-1.2 apart down the slope
+        for (kind, c), v in cols.items():
+            starts = {}
+            for course, _x, s_up in v:
+                starts.setdefault(course, s_up)
+            ks = sorted(starts)
+            gaps = [(starts[b] - starts[a]) / (b - a) for a, b in zip(ks, ks[1:])]
+            check(len(ks) >= 8, ("too few courses", kind, c, ks))
+            check(statistics.median(gaps) >= 1.0 and statistics.median(gaps) <= 1.2,
+                  ("course spacing", kind, c, gaps))
 
 
 def t_house_sag():
