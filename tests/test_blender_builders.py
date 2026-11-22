@@ -40,3 +40,8 @@ def test_cabinet_dimensions_follow_params():
 @pytest.mark.blender
 def test_shots_named():
     _run("shots")
+
+
+@pytest.mark.blender
+def test_phonebooth_dimensions_and_glazing_toggle():
+    _run("phonebooth_dims")

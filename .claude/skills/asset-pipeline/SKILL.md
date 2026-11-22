@@ -13,7 +13,7 @@ Describe -> Sample -> Lock -> Build -> Deliver.
 
 1. Describe: the creator says what they want. Their words outrank any reference. Never invent the theme. Ask when something is unclear.
 2. Sample: see below.
-3. Lock: the creator picks a variant. Copy it to `spec.json` (or `.venv/bin/python -m rbxasset new <game>/<asset> --builder house|cabinet` for a skeleton).
+3. Lock: the creator picks a variant. Copy it to `spec.json` (or `.venv/bin/python -m rbxasset new <game>/<asset> --builder <builder from match>` for a skeleton).
 4. Build: `mkdir -p .superpowers && lockf .superpowers/blender.lock .venv/bin/python -m rbxasset build <game>/<asset>`. It prints a mesh/tris table and preview paths.
 5. Deliver: only after approval (below).
 
@@ -61,7 +61,7 @@ Every spec has `design_notes`: a list of plain-words entries explaining each cho
 
 ## Scope
 
-Builders today are `house` and `cabinet`. Each declares `makes` and `not_for` in its `vocab.py`; pick a builder with `.venv/bin/python -m rbxasset match <words>` (thresholds: build 0.8, ask 0.5, decline below). For an asset no builder fits, say a new builder is needed. Do not improvise a spec.
+Builders today are `house`, `cabinet` and `phonebooth` (`ls rbxasset/builders` for the current list). When `match` declines, build a new builder (a package under `rbxasset/builders/<name>/` with `vocab.py` filling `makes`/`not_for`, `build.py`, a registry line, tests) without asking for approval, then re-run `match`. Each declares `makes` and `not_for` in its `vocab.py`; pick a builder with `.venv/bin/python -m rbxasset match <words>` (thresholds: build 0.8, ask 0.5, decline below). For an asset no builder fits, say a new builder is needed. Do not improvise a spec.
 
 ## Blender load
 

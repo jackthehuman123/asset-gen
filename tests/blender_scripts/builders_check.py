@@ -12,6 +12,7 @@ from mathutils import Vector  # noqa: E402
 from rbxasset.builders import load_vocab  # noqa: E402
 from rbxasset.builders.cabinet import build as cabinet_build  # noqa: E402
 from rbxasset.builders.house import build as house_build  # noqa: E402
+from rbxasset.builders.phonebooth import build as phonebooth_build  # noqa: E402
 from rbxasset.spec import load_spec  # noqa: E402
 from rbxasset.style import load_style  # noqa: E402
 
@@ -240,6 +241,28 @@ def t_cabinet_dims():
     check(abs(res.ctx["W"] - 5.4) < 1e-6 and abs(res.ctx["H"] - 2.0) < 1e-6, res.ctx)
 
 
+def t_phonebooth_dims():
+    vocab = load_vocab("phonebooth")
+    p = {k: d.default for k, d in vocab.params.items()}
+    p.update(width=3.2, depth=3.0, height=8.0, roof_rise=0.6)
+    res = phonebooth_build.build(p, random.Random(1))
+    check(set(res.parts) == set(vocab.part_tags), sorted(res.parts))
+    check(all(res.parts[t] for t in vocab.part_tags), "empty tag")
+    vs = world_verts([o for objs in res.parts.values() for o in objs])
+    xs, ys, zs = [v.x for v in vs], [v.y for v in vs], [v.z for v in vs]
+    check(abs(min(zs)) <= 0.02, ("ground", min(zs)))
+    check(abs((max(zs) - min(zs)) - (8.0 + 0.12 + 0.6)) <= 0.03, ("height", max(zs)))
+    check(max(xs) - min(xs) >= 3.2 and max(ys) - min(ys) >= 3.0, "footprint")
+    check(abs(max(xs) + min(xs)) <= 0.02 and abs(max(ys) + min(ys)) <= 0.08, "centred")
+    for tag, objs in res.parts.items():
+        check(joined_tris(objs) < MAX_TRIS, (tag, "over budget"))
+    check(res.ctx["W"] == 3.2, res.ctx)
+    clear_scene()
+    p["glazing"] = False
+    res = phonebooth_build.build(p, random.Random(1))
+    check(not res.parts["glazing"], "glazing=False must leave the tag empty")
+
+
 def _check_shots(shots, names):
     check([s[0] for s in shots] == names, [s[0] for s in shots])
     for name, loc, tgt, lens in shots:
@@ -266,6 +289,7 @@ TESTS = {
     "house_sag": t_house_sag,
     "house_openings": t_house_openings,
     "cabinet_dims": t_cabinet_dims,
+    "phonebooth_dims": t_phonebooth_dims,
     "shots": t_shots,
 }
 

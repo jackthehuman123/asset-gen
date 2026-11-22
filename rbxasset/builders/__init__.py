@@ -7,6 +7,7 @@ from rbxasset.builders.vocab import Vocab
 REGISTRY: Dict[str, str] = {
     "cabinet": "rbxasset.builders.cabinet",
     "house": "rbxasset.builders.house",
+    "phonebooth": "rbxasset.builders.phonebooth",
 }
 
 

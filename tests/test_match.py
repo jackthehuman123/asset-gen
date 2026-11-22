@@ -66,7 +66,7 @@ def test_real_builders_sideboard_and_cottage_build():
 
 
 def test_cli_match_prints_verdict_and_exits_0(capsys):
-    assert cli.main(["match", "phonebooth"]) == 0
+    assert cli.main(["match", "spaceship"]) == 0
     assert "verdict: decline" in capsys.readouterr().out
 
 

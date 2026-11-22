@@ -19,7 +19,7 @@ The test lane lives in `blueprint/`. Output is `blueprint/out_<asset>/` (gitigno
    - Prose: three to six sentences, using their words. Never invent a theme they did not give; where you fill a gap (a colour, a roughness), say so in one line in the prose.
    - JSON block: `intent`, `lighting` preset, and only the finishes the look needs, with just the required keys per type (wood `base`+`grain`; paint and metal `color`; stone `color_a`+`color_b`+`mortar`). Add optional keys only when they change the look. Keep paint `mottle` under 0.1. Add `wear` and `avoid` when the words imply them.
    - A style describes look, never form. If the creator describes a shape, put it in the spec, not the style.
-2. **Draft the spec.** `.venv/bin/python -m rbxasset new blueprint/<asset> --builder house|cabinet`, then fill `brief`, `params`, and `parts` (every part tag gets one of the finishes you just defined). Use the builder step 0 chose.
+2. **Draft the spec.** `.venv/bin/python -m rbxasset new blueprint/<asset> --builder <builder from match>`, then fill `brief`, `params`, and `parts` (every part tag gets one of the finishes you just defined). Use the builder step 0 chose.
 3. **Build.** `mkdir -p .superpowers && lockf .superpowers/blender.lock .venv/bin/python -m rbxasset build blueprint/<asset>`. Exit 2 means a style or spec error (fix the file); exit 1 is a build failure.
 4. **Show.** Open the previews in `blueprint/out_<asset>/out/previews/` and show the creator the STYLE.md next to them. They judge how well the style carried over.
 
