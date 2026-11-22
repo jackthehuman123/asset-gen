@@ -6,6 +6,7 @@ games/**/_tiles/
 __pycache__/
 blueprint/spike/blender/out*/
 blueprint/out_*/
+blueprint/_tiles/
 *.log
 tools/
 .superpowers/

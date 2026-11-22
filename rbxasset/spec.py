@@ -13,6 +13,12 @@ from rbxasset.builders import REGISTRY, load_vocab
 from rbxasset.style import Style
 
 FINISH_TYPES = ("wood", "paint", "metal", "stone")
+REQUIRED_FINISH_KEYS = {
+    "wood": ("base", "grain"),
+    "paint": ("color",),
+    "metal": ("color",),
+    "stone": ("color_a", "color_b", "mortar"),
+}
 DECAL_KINDS = ("smear", "drips", "splatter")
 
 _PY_TYPES = {
@@ -130,6 +136,10 @@ def load_spec(spec_path: Path, style: Style) -> ResolvedSpec:
         if f.get("type") not in FINISH_TYPES:
             raise SpecError("finish '%s' has bad type %r; allowed: %s"
                             % (name, f.get("type"), ", ".join(FINISH_TYPES)))
+        missing = [k for k in REQUIRED_FINISH_KEYS[f["type"]] if k not in f]
+        if missing:
+            raise SpecError("finish '%s' (type %s) is missing required key(s): %s"
+                            % (name, f["type"], ", ".join(missing)))
 
     parts = raw.get("parts", {})
     for tag in parts:

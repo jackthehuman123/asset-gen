@@ -150,3 +150,19 @@ def test_area_key_allowed_and_must_be_string(style, tmp_path):
     p = write(tmp_path, "cabinet_spec.json", lambda d: d.update(area=3))
     with pytest.raises(SpecError, match="area"):
         load_spec(p, style)
+
+
+@pytest.mark.parametrize("ftype,partial,missing", [
+    ("wood", {"base": "#111111"}, "grain"),
+    ("paint", {}, "color"),
+    ("metal", {}, "color"),
+    ("stone", {"color_a": "#111111"}, "color_b, mortar"),
+])
+def test_finish_missing_required_key_is_a_spec_error(tmp_path, ftype, partial, missing):
+    style_md = tmp_path / "s.md"
+    fin = {"type": ftype, **partial}
+    style_md.write_text("x\n```json style\n%s\n```\n" % json.dumps({"finishes": {"f1": fin}}))
+    p = write(tmp_path, "cabinet_spec.json", lambda d: d["parts"].update({k: "f1" for k in d["parts"]}))
+    with pytest.raises(SpecError) as e:
+        load_spec(p, load_style(style_md))
+    assert "f1" in str(e.value) and missing in str(e.value) and ftype in str(e.value)
