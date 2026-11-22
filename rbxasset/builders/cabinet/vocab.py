@@ -12,4 +12,8 @@ VOCAB = Vocab(
     tiled_tags=frozenset(),
     big_tags=frozenset({"carcass", "fronts"}),
     no_collide_tags=frozenset({"handles", "foot_caps"}),
+    makes=("cabinet", "sideboard", "console", "tv stand", "credenza", "dresser",
+           "low drawer-and-door unit"),
+    not_for=("glass-fronted display case", "cup cabinet", "china cabinet", "display cabinet", "locker", "wardrobe", "bookshelf", "shelving",
+             "table", "chair", "bed", "open shelf unit"),
 )

@@ -6,7 +6,7 @@ import zlib
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from rbxasset import assemble, store
+from rbxasset import assemble, match, store
 from rbxasset.builders import REGISTRY, load_vocab
 from rbxasset.config import ConfigError, load_config
 from rbxasset.runner import BuildError, run_blender
@@ -112,6 +112,17 @@ def cmd_new(root: Path, ref: str, builder: str) -> int:
     return 0
 
 
+def cmd_match(request: str) -> int:
+    if not request.strip():
+        raise SpecError("match needs a description of the asset")
+    ms = match.match_all(request)
+    for m in ms:
+        print("%-10s %.2f  %s" % (m.builder, m.confidence, "; ".join(m.reasons) or "no fit"))
+    kind, best = match.verdict(ms)
+    print("verdict: %s%s" % (kind, " (best: %s)" % best.builder if best else ""))
+    return 0
+
+
 def _fake_ids(manifest: Dict, paths) -> Dict[str, str]:
     files = [str(paths.fbx)]
     for m in manifest.get("meshes", []):
@@ -152,12 +163,16 @@ def main(argv: Optional[List[str]] = None, root: Optional[Path] = None) -> int:
     n = sub.add_parser("new")
     n.add_argument("asset")
     n.add_argument("--builder", required=True)
+    mt = sub.add_parser("match")
+    mt.add_argument("request", nargs="+")
     dl = sub.add_parser("deliver")
     dl.add_argument("asset")
     dl.add_argument("--dry-run", action="store_true")
     args = ap.parse_args(argv)
     root = Path(root) if root else Path.cwd()
     try:
+        if args.cmd == "match":
+            return cmd_match(" ".join(args.request))
         if args.cmd == "build":
             return cmd_build(root, args.asset)
         if args.cmd == "sample":

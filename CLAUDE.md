@@ -17,7 +17,7 @@ The creator briefs an asset in words. You write a JSON spec, headless Blender bu
 
 ## Commands
 
-`.venv/bin/python -m rbxasset build|sample|new|deliver [--dry-run] <game>/<asset>`. Exit codes: 0 ok, 2 validation or config error, 1 build or upload failure.
+`.venv/bin/python -m rbxasset build|sample|new|deliver [--dry-run] <game>/<asset>`, and `match <words>` (which builder fits a request, with confidence and a build/ask/decline verdict). Exit codes: 0 ok, 2 validation or config error, 1 build or upload failure.
 
 ## Tests
 

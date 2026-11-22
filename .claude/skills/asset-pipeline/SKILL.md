@@ -61,7 +61,7 @@ Every spec has `design_notes`: a list of plain-words entries explaining each cho
 
 ## Scope
 
-v1 builders are `house` and `cabinet` only. For any other asset type, say a new builder is needed and that it is out of v1. Do not improvise a spec for it.
+Builders today are `house` and `cabinet`. Each declares `makes` and `not_for` in its `vocab.py`; pick a builder with `.venv/bin/python -m rbxasset match <words>` (thresholds: build 0.8, ask 0.5, decline below). For an asset no builder fits, say a new builder is needed. Do not improvise a spec.
 
 ## Blender load
 

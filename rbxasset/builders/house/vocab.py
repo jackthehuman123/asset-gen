@@ -98,4 +98,7 @@ VOCAB = Vocab(
     big_tags=frozenset({"frame", "engawa", "tiles_front", "tiles_back"}),
     no_collide_tags=frozenset({"lattice", "tiles_front", "tiles_back", "ridge", "eaves"}),
     validate=validate,
+    makes=("house", "farmhouse", "cottage", "village house", "single-storey dwelling"),
+    not_for=("multi-storey building", "shrine", "temple", "tower", "skyscraper",
+             "interior room", "domed structure", "round building"),
 )
