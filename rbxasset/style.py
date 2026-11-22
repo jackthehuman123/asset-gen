@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 LOCKED_KEYS = ("camera", "studs_per_tile", "budgets", "lighting")
+LIGHTING_PRESETS = ("bright_interior", "abandoned_interior", "overcast_exterior")
 MAX_TRIS = 20000
 MAX_TEXTURE = 1024
 
@@ -76,6 +77,11 @@ def load_style(game_md: Path, area_md: Path) -> Style:
         if budgets[k] > MAX_TEXTURE:
             raise StyleError("budgets.%s %s exceeds Roblox limit %d"
                              % (k, budgets[k], MAX_TEXTURE))
+    lighting = game.get("lighting", {"preset": "overcast_exterior"})
+    preset = lighting.get("preset", "overcast_exterior")
+    if preset not in LIGHTING_PRESETS:
+        raise StyleError("lighting.preset %r is unknown; allowed: %s"
+                         % (preset, ", ".join(LIGHTING_PRESETS)))
     finishes = dict(game.get("finishes", {}))
     finishes.update(area.get("finishes", {}))
     palette = dict(game.get("palette", {}))
@@ -88,7 +94,7 @@ def load_style(game_md: Path, area_md: Path) -> Style:
         camera=camera,
         studs_per_tile=studs,
         budgets=budgets,
-        lighting=game.get("lighting", {"preset": "overcast_exterior"}),
+        lighting=lighting,
         palette=palette,
         finishes=finishes,
         wear=wear,

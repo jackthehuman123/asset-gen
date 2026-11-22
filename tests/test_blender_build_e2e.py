@@ -11,7 +11,7 @@ from rbxasset import cli
 FIX = Path(__file__).parent / "fixtures"
 
 
-def png_rgba_pixel(path, x, y):
+def png_rgba_rows(path):
     data = Path(path).read_bytes()
     assert data[:8] == b"\x89PNG\r\n\x1a\n"
     pos, idat, w, h, ctype, depth = 8, b"", 0, 0, 0, 0
@@ -48,8 +48,12 @@ def png_rgba_pixel(path, x, y):
                 line[i] = (line[i] + pr) & 255
         rows.append(line)
         prev = line
-    px = rows[y][x * 4:x * 4 + 4]
-    return tuple(px)
+    return w, h, rows
+
+
+def png_rgba_pixel(path, x, y):
+    _, _, rows = png_rgba_rows(path)
+    return tuple(rows[y][x * 4:x * 4 + 4])
 
 
 @pytest.mark.blender
@@ -86,3 +90,12 @@ def test_cabinet_build_end_to_end(tmp_path):
     d = m["decals"][0]
     assert d["on"] == "fronts"
     assert png_rgba_pixel(d["image"], 0, 0)[3] == 0
+
+    # opaque decal pixels must be the spec colour (#3A1A14) in sRGB, shaded 0.69-1.06x
+    w, h, rows = png_rgba_rows(d["image"])
+    opaque = [tuple(r[i:i + 3]) for r in rows for i in range(0, w * 4, 4) if r[i + 3] == 255]
+    assert opaque, "decal has no fully opaque pixels"
+    base = (0x3A, 0x1A, 0x14)
+    for px in opaque:
+        for got, want in zip(px, base):
+            assert want * 0.65 - 2 <= got <= want * 1.1 + 2, (px, base)

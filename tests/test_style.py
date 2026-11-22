@@ -55,3 +55,10 @@ def test_budget_over_roblox_limit_rejected(tmp_path):
 
 def test_avoid_lists_concatenate(tmp_path):
     assert mk(tmp_path, {"avoid": ["a"]}, {"avoid": ["b"]}).avoid == ["a", "b"]
+
+
+def test_unknown_lighting_preset_rejected_with_allowed_list(tmp_path):
+    with pytest.raises(StyleError) as e:
+        mk(tmp_path, {"lighting": {"preset": "disco"}}, {})
+    assert "disco" in str(e.value) and "abandoned_interior" in str(e.value)
+    assert mk(tmp_path, {"lighting": {"preset": "bright_interior"}}, {}).lighting["preset"] == "bright_interior"

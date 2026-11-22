@@ -31,7 +31,10 @@ def run_blender(cfg: Config, job: Dict, timeout: int = 3600) -> Dict:
                               universal_newlines=True, timeout=timeout)
         text, rc = proc.stdout, proc.returncode
     except subprocess.TimeoutExpired as e:
-        text, rc = (e.stdout or "") + "\nTIMEOUT after %ss" % timeout, -1
+        partial = e.stdout or ""
+        if isinstance(partial, bytes):
+            partial = partial.decode("utf-8", "replace")
+        text, rc = partial + "\nTIMEOUT after %ss" % timeout, -1
     except OSError as e:
         raise BuildError("cannot run blender %r: %s" % (cfg.blender, e))
     log_path.write_text(text)

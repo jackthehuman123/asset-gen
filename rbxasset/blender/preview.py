@@ -9,7 +9,7 @@ from mathutils import Vector
 from . import executor
 from .finishes import lin
 
-PRESETS = ("bright_interior", "abandoned_interior", "overcast_exterior")
+from rbxasset.style import LIGHTING_PRESETS as PRESETS  # noqa: E402
 
 
 def _plain(name, hexstr, rough=0.85):

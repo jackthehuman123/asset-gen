@@ -111,3 +111,14 @@ def test_sample_runs_each_variant_into_own_folder(tmp_path, capsys):
     assert len(log.read_text().split()) == 2
     s = root / "assets" / "farm" / "chest" / "samples"
     assert (s / "alpha" / "manifest.json").is_file() and (s / "beta" / "manifest.json").is_file()
+
+
+def test_blender_timeout_raises_build_error(tmp_path):
+    root, _ = make_project(tmp_path, "#!/bin/sh\necho started\nsleep 5\n")
+    cfg = load_config(root)
+    out = root / "assets" / "farm" / "chest" / "out"
+    job = {"mode": "build", "asset": "farm/chest", "out_dir": str(out),
+           "manifest_path": str(out / "manifest.json")}
+    with pytest.raises(BuildError) as e:
+        run_blender(cfg, job, timeout=1)
+    assert "TIMEOUT" in str(e.value)

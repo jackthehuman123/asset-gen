@@ -13,10 +13,6 @@ def _hex(h):
     return [int(h[i:i + 2], 16) / 255.0 for i in (0, 2, 4)]
 
 
-def _srgb_to_lin(c):
-    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
-
-
 def _smooth(x, a, b):
     t = min(1.0, max(0.0, (x - a) / (b - a)))
     return t * t * (3 - 2 * t)
@@ -59,15 +55,13 @@ def render_decal(kind: str, color: str, seed: int, res: int, path: str) -> str:
             a = _mask(kind, u, v, off) * _smooth(edge, 0.0, 0.1)
             # thick areas read darker and drier; thin edges lighter
             shade = 0.75 + 0.25 * (1.0 - a) + (_n(u, v, 20.0, off, 11.0) - 0.5) * 0.12
-            r, g, b = (_srgb_to_lin(min(1.0, max(0.0, c * shade))) for c in base)
+            # byte image: pixels are stored sRGB-encoded, so no linear conversion
+            r, g, b = (min(1.0, max(0.0, c * shade)) for c in base)
             pixels.extend((r, g, b, min(1.0, max(0.0, a))))
     img = bpy.data.images.new("decal_" + kind, res, res, alpha=True)
     img.alpha_mode = "STRAIGHT"
     img.pixels.foreach_set(pixels)
     img.filepath_raw = path
     img.file_format = "PNG"
-    scene = bpy.context.scene
-    scene.render.image_settings.color_mode = "RGBA"
-    scene.render.image_settings.color_depth = "8"
     img.save()
     return path
