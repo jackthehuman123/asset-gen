@@ -22,8 +22,9 @@ Compared against blueprint/spike/blender/out_house and out_styled.
   they still read as iron hardware.
 - Opening: dark interior with light bleeding through the back lattice, door ajar; reads well.
 
-## Creator verdict: PENDING
-Show the creator these previews:
+## Creator verdict: APPROVED (2026-11-22)
+Creator: "the murder_house looks good" (after the kawara v2 roof and plaster fix).
+Previews judged:
 - wide: assets/village/murder_house/out/previews/preview_wide.png
 - close_opening: assets/village/murder_house/out/previews/preview_close_opening.png
 - roof: assets/village/murder_house/out/previews/preview_roof.png
