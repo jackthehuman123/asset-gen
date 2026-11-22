@@ -20,8 +20,11 @@ def make_finish(name, f, wear, ctx, tile=None):
 
     ctx: dict from the caller (e.g. {'W': width, 'H': height}); no layer reads it
     now that blood is a Decal, kept for position-based layers.
-    tile: accepted and ignored until tile mode is implemented; all noise reads
-    coordinates through coord() so the source can be swapped then."""
+    tile: tile size in studs. When set, every noise / Voronoi reads the bake plane's
+    UV mapped onto a 4D torus (periodic in u and v); geometry/position layers
+    (grime, edge, moss up/low/crevice, dust, rust crevice) are skipped."""
+    import math
+    tiled = tile is not None
     skip = set(f.get("skip_wear", []))
     WEAR = {k: v for k, v in wear.items() if k not in skip}
 
@@ -86,9 +89,44 @@ def make_finish(name, f, wear, ctx, tile=None):
     tc = N.new("ShaderNodeTexCoord")
 
     def coord():
-        return tc.outputs["Object"]  # swap point for tile mode
+        return tc.outputs["Object"]
 
-    def noise(scale_vec, scale, detail=6.0, rough=0.6, distortion=0.0):
+    uv_cache = {}
+
+    def torus(sx, sy):
+        """(vector, w) sockets for a 4D torus with U/V frequencies sx, sy per tile."""
+        if "uv" not in uv_cache:
+            uvn = N.new("ShaderNodeTexCoord")
+            sep = N.new("ShaderNodeSeparateXYZ")
+            L.new(uvn.outputs["UV"], sep.inputs[0])
+            uv_cache["uv"] = (sep.outputs["X"], sep.outputs["Y"])
+        u, v = uv_cache["uv"]
+        k = 2 * math.pi
+        a, b = m("MULTIPLY", u, k), m("MULTIPLY", v, k)
+        rx, ry = tile * sx / k, tile * sy / k
+        comb = N.new("ShaderNodeCombineXYZ")
+        L.new(m("MULTIPLY", m("COSINE", a), rx), comb.inputs["X"])
+        L.new(m("MULTIPLY", m("SINE", a), rx), comb.inputs["Y"])
+        L.new(m("MULTIPLY", m("COSINE", b), ry), comb.inputs["Z"])
+        return comb.outputs["Vector"], m("MULTIPLY", m("SINE", b), ry)
+
+    def tex4d(node, sx, sy):
+        node.inputs["Scale"].default_value = 1.0
+        vec, w = torus(sx, sy)
+        L.new(vec, node.inputs["Vector"])
+        L.new(w, node.inputs["W"])
+
+    def noise(scale_vec, scale, detail=6.0, rough=0.6, distortion=0.0, uv=None):
+        """uv=(sx, sy): tile-mode axis scales (default: first two of scale_vec)."""
+        if tiled:
+            sx, sy = uv or scale_vec[:2]
+            nz = N.new("ShaderNodeTexNoise")
+            nz.noise_dimensions = "4D"
+            nz.inputs["Detail"].default_value = detail
+            nz.inputs["Roughness"].default_value = rough
+            nz.inputs["Distortion"].default_value = distortion
+            tex4d(nz, sx * scale, sy * scale)
+            return nz.outputs["Fac"]
         mp = N.new("ShaderNodeMapping")
         mp.inputs["Scale"].default_value = scale_vec
         L.new(coord(), mp.inputs["Vector"])
@@ -116,16 +154,20 @@ def make_finish(name, f, wear, ctx, tile=None):
 
     if t == "wood":
         s = f.get("grain_scale", 1.0)
-        attr = N.new("ShaderNodeAttribute")
-        attr.attribute_name = "grain"
-        wx, wy, wz = xyz(attr.outputs["Vector"])
-        g = None
-        for w, along in ((wx, 0), (wy, 1), (wz, 2)):
-            cs, fs = [8 * s] * 3, [60 * s] * 3
-            cs[along], fs[along] = 0.15 * s, 0.3 * s
-            gi = m("MULTIPLY_ADD", noise(cs, 2.5, 8, 0.65, 0.4), 0.7, m("MULTIPLY", noise(fs, 3.0, 3), 0.3))
-            term = m("MULTIPLY", gi, w)
-            g = term if g is None else m("ADD", g, term)
+        if tiled:  # grain axis is U
+            cs, fs = [0.15 * s, 8 * s, 8 * s], [0.3 * s, 60 * s, 60 * s]
+            g = m("MULTIPLY_ADD", noise(cs, 2.5, 8, 0.65, 0.4), 0.7, m("MULTIPLY", noise(fs, 3.0, 3), 0.3))
+        else:
+            attr = N.new("ShaderNodeAttribute")
+            attr.attribute_name = "grain"
+            wx, wy, wz = xyz(attr.outputs["Vector"])
+            g = None
+            for w, along in ((wx, 0), (wy, 1), (wz, 2)):
+                cs, fs = [8 * s] * 3, [60 * s] * 3
+                cs[along], fs[along] = 0.15 * s, 0.3 * s
+                gi = m("MULTIPLY_ADD", noise(cs, 2.5, 8, 0.65, 0.4), 0.7, m("MULTIPLY", noise(fs, 3.0, 3), 0.3))
+                term = m("MULTIPLY", gi, w)
+                g = term if g is None else m("ADD", g, term)
         ramp = N.new("ShaderNodeValToRGB")
         k = f.get("grain_contrast", 0.5)
         ramp.color_ramp.elements[0].position = 0.5 - 0.2 * k
@@ -149,9 +191,13 @@ def make_finish(name, f, wear, ctx, tile=None):
             vc = N.new("ShaderNodeTexVoronoi")
             vc.feature = "DISTANCE_TO_EDGE"
             vc.inputs["Scale"].default_value = 3.0
-            wob = N.new("ShaderNodeMapping")
-            L.new(coord(), wob.inputs["Vector"])
-            L.new(wob.outputs["Vector"], vc.inputs["Vector"])
+            if tiled:
+                vc.voronoi_dimensions = "4D"
+                tex4d(vc, 3.0, 3.0)
+            else:
+                wob = N.new("ShaderNodeMapping")
+                L.new(coord(), wob.inputs["Vector"])
+                L.new(wob.outputs["Vector"], vc.inputs["Vector"])
             line = m("SUBTRACT", 1.0, smooth(vc.outputs["Distance"], 0.0, 0.015))
             color = lerp_c(color, rgb("#1a1510"), m("MULTIPLY", line, f["cracks"]))
         peel = noise((1, 1, 1), 300.0, 2)
@@ -165,21 +211,26 @@ def make_finish(name, f, wear, ctx, tile=None):
         metal = 1.0
         bump_height, bump_strength = br, 0.05 * f.get("brushed", 0.3)
         if f.get("rust"):
+            crev_rust = 0.0 if tiled else m("MULTIPLY", crevice(0.05), 2.0)
             blotch = smooth(noise((1, 1, 1), 18.0, 8, 0.7), 0.55 - 0.15 * f["rust"], 0.62)
-            rust = m("MINIMUM", m("ADD", m("MULTIPLY", blotch, f["rust"] * 1.4),
-                                  m("MULTIPLY", crevice(0.05), 2.0)), 1.0)
+            rust = m("MINIMUM", m("ADD", m("MULTIPLY", blotch, f["rust"] * 1.4), crev_rust), 1.0)
             color = lerp_c(color, rgb(f.get("rust_color", "#5C2C14")), rust)
             rough = lerp_f(rough, 0.9, rust)
             metal = lerp_f(1.0, 0.0, rust)
             bump_height = m("ADD", bump_height, m("MULTIPLY", rust, 0.6))
             bump_strength = max(bump_strength, 0.12)
     elif t == "stone":
-        mp = N.new("ShaderNodeMapping")
-        L.new(coord(), mp.inputs["Vector"])
         vo = N.new("ShaderNodeTexVoronoi")
         vo.feature = "DISTANCE_TO_EDGE"
-        vo.inputs["Scale"].default_value = f.get("cell_scale", 1.0)
-        L.new(mp.outputs["Vector"], vo.inputs["Vector"])
+        if tiled:
+            vo.voronoi_dimensions = "4D"
+            cs_ = f.get("cell_scale", 1.0)
+            tex4d(vo, cs_, cs_)
+        else:
+            mp = N.new("ShaderNodeMapping")
+            L.new(coord(), mp.inputs["Vector"])
+            vo.inputs["Scale"].default_value = f.get("cell_scale", 1.0)
+            L.new(mp.outputs["Vector"], vo.inputs["Vector"])
         edge = smooth(vo.outputs["Distance"], 0.0, 0.06)  # 0 at mortar, 1 inside stones
         tone = noise((1, 1, 1), 1.5, 4)
         color = lerp_c(rgb(f["color_b"]), rgb(f["color_a"]), tone)
@@ -191,8 +242,9 @@ def make_finish(name, f, wear, ctx, tile=None):
     else:
         raise ValueError(f"unknown finish type {t}")
 
-    _, _, obj_z = xyz(coord())
-    _, _, nz_ = xyz(tc.outputs["Normal"])
+    if not tiled:
+        _, _, obj_z = xyz(coord())
+        _, _, nz_ = xyz(tc.outputs["Normal"])
 
     # ---------------- wear layers
     if WEAR.get("water_stains"):
@@ -203,18 +255,18 @@ def make_finish(name, f, wear, ctx, tile=None):
 
     if WEAR.get("streaks"):
         st = WEAR["streaks"]
-        vertical = m("SUBTRACT", 1.0, smooth(m("ABSOLUTE", nz_), 0.2, 0.5))
-        lines = smooth(noise((3, 3, 0.2), 1.5, 4, 0.5), 0.55, 0.78)
+        vertical = 1.0 if tiled else m("SUBTRACT", 1.0, smooth(m("ABSOLUTE", nz_), 0.2, 0.5))
+        lines = smooth(noise((3, 3, 0.2), 1.5, 4, 0.5, uv=(3, 0.2)), 0.55, 0.78)
         mask = m("MULTIPLY", m("MULTIPLY", vertical, lines), st["amount"])
         color = lerp_c(color, rgb(st["color"]), m("MULTIPLY", mask, 0.45))
 
-    if WEAR.get("grime"):
+    if WEAR.get("grime") and not tiled:
         crev = smooth(crevice(0.25, 16), 0.05, 0.6)
         grime = m("MULTIPLY", m("MULTIPLY", crev, WEAR["grime"]), m("ADD", 0.5, noise((1, 1, 1), 12.0, 4)))
         color = lerp_c(color, rgb("#120C08"), m("MINIMUM", grime, 0.9))
         rough = lerp_f(rough, 0.85, grime)
 
-    if WEAR.get("edge") and f.get("edge_color"):
+    if WEAR.get("edge") and f.get("edge_color") and not tiled:
         bev = N.new("ShaderNodeBevel")
         bev.inputs["Radius"].default_value = 0.025
         bev.samples = 8
@@ -230,17 +282,20 @@ def make_finish(name, f, wear, ctx, tile=None):
 
     if WEAR.get("moss"):
         ms = WEAR["moss"]
-        up = smooth(nz_, 0.3, 0.9)
-        low = m("SUBTRACT", 1.0, smooth(obj_z, 0.3, 2.5))
-        where = m("MINIMUM", m("ADD", m("ADD", m("MULTIPLY", up, 0.7), m("MULTIPLY", low, 0.8)),
-                               m("MULTIPLY", crevice(0.3), 1.2)), 1.0)
+        if tiled:
+            where = 1.0
+        else:
+            up = smooth(nz_, 0.3, 0.9)
+            low = m("SUBTRACT", 1.0, smooth(obj_z, 0.3, 2.5))
+            where = m("MINIMUM", m("ADD", m("ADD", m("MULTIPLY", up, 0.7), m("MULTIPLY", low, 0.8)),
+                                   m("MULTIPLY", crevice(0.3), 1.2)), 1.0)
         patchy = smooth(noise((1, 1, 1), 1.8, 8, 0.65), 0.42, 0.62)
         moss = m("MULTIPLY", m("MULTIPLY", where, patchy), ms["amount"])
         color = lerp_c(color, rgb(ms["color"]), moss)
         rough = lerp_f(rough, 0.95, moss)
         bump_height = m("ADD", bump_height, m("MULTIPLY", moss, m("MULTIPLY", noise((1, 1, 1), 60, 4), 0.8)))
 
-    if WEAR.get("dust"):
+    if WEAR.get("dust") and not tiled:
         up = smooth(nz_, 0.55, 0.95)
         fine = smooth(noise((1, 1, 1), 40.0, 4, 0.5), 0.3, 0.6)  # fine, even film
         dust = m("MULTIPLY", m("MULTIPLY", up, m("ADD", 0.6, m("MULTIPLY", fine, 0.4))), WEAR["dust"])
