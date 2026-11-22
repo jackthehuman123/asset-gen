@@ -49,7 +49,9 @@ Every spec has `design_notes`: a list of plain-words entries explaining each cho
 
 ## Delivery
 
-Delivery details are unverified. The Open Cloud request/response shapes and the Blender-to-Studio axis mapping stay unverified until Task 1, the live delivery spike with the creator, has run (`docs/findings/delivery.md`). If Task 1 has not run, run it before the first real `deliver`.
+**Primary path (option A, the creator's choice on 2026-11-22):** `build` writes `out/asset.fbx` with every baked map embedded. The creator imports it with Studio's File > Import 3D, which brings in all the SurfaceAppearance maps at the right scale; the creator verified this on the spike FBXs. Story decals are not in the FBX: give the creator each decal PNG from `out/textures/` and its placement from the manifest, and they add the Decal by hand. Ask for a screenshot next to a character to check scale.
+
+**Kept for later (option B):** automated `deliver` via Open Cloud plus `assemble.lua`. It has never run against live Roblox. The request/response shapes and the axis/scale mapping are unverified until Task 1 has run (`docs/findings/delivery.md`). Use it only when the creator asks for it, and run Task 1 first.
 
 1. Optional check: `.venv/bin/python -m rbxasset deliver --dry-run <area>/<name>` writes the assemble script with fake ids and uploads nothing.
 2. `.venv/bin/python -m rbxasset deliver <area>/<name>` (needs `ROBLOX_API_KEY` in `.env`). Uploads are cached by content hash in `roblox.json`, so a rerun re-uploads only what changed. Rejected decals are omitted. Exit 1 means upload failure, so rerun to resume.

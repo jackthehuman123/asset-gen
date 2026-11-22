@@ -85,6 +85,10 @@ def test_cabinet_build_end_to_end(tmp_path):
                 assert Path(x["maps"][k]).is_file(), (x["name"], k)
     assert Path(by["handles"]["maps"]["metalness"]).is_file()
     assert Path(m["fbx"]).is_file()
+    # baked maps are embedded so Studio's 3D Importer brings them in one step
+    fbx_bytes = Path(m["fbx"]).read_bytes()
+    assert Path(by["carcass"]["maps"]["color"]).name.encode() in fbx_bytes
+    assert len(fbx_bytes) > Path(by["carcass"]["maps"]["color"]).stat().st_size
     assert len([p for p in m["previews"] if Path(p).is_file()]) >= 2
     assert len(m["decals"]) == 1
     d = m["decals"][0]

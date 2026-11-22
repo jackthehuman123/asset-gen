@@ -209,10 +209,12 @@ def swap_to_baked(meshes) -> None:
 
 
 def export_fbx(meshes, path) -> None:
+    """Export with baked maps embedded, so Studio's File > Import 3D brings in
+    every SurfaceAppearance map in one step (creator-verified 2026-11-22)."""
     bpy.ops.object.select_all(action="DESELECT")
     for me in meshes:
         me.obj.select_set(True)
     bpy.ops.export_scene.fbx(
         filepath=path, use_selection=True, apply_unit_scale=True,
         apply_scale_options="FBX_SCALE_UNITS", axis_forward="-Z", axis_up="Y",
-        mesh_smooth_type="FACE", path_mode="COPY", embed_textures=False)
+        mesh_smooth_type="FACE", path_mode="COPY", embed_textures=True)

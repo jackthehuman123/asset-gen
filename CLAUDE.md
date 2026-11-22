@@ -23,7 +23,7 @@ Blender is heavy on the creator's 16GB MacBook Air. Run every Blender-running co
 
 ## Status and rules
 
-- Open Cloud request/response shapes and the Blender-to-Studio axis mapping are unverified until Task 1 (live delivery spike with the creator).
+- Delivery: the main path is the FBX with embedded maps, imported through Studio's File > Import 3D (creator-verified). The Open Cloud `deliver` command is kept for later. Its request/response shapes and axis mapping are unverified until Task 1 (live delivery spike with the creator).
 - Blood and story marks are separate, non-graphic Decals, never baked into maps.
 - The creator's words outrank references. Never invent the theme.
 - Never commit `.env` (the only secret).
