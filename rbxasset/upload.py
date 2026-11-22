@@ -16,6 +16,7 @@ Known limitations (need Task 1 data to solve):
   rerun re-uploads the file.
 """
 import hashlib
+import http.client
 import json
 import os
 import time
@@ -106,7 +107,15 @@ class OpenCloud:
             retry = False
             try:
                 with urllib.request.urlopen(req_factory(), timeout=60) as resp:
-                    return json.loads(resp.read().decode() or "{}")
+                    raw = resp.read()
+                try:
+                    data = json.loads(raw.decode() or "{}")
+                except ValueError:  # includes UnicodeDecodeError and JSONDecodeError
+                    raise UploadError("unexpected Open Cloud response: %s"
+                                      % raw.decode("utf-8", "replace")[:300]) from None
+                if not isinstance(data, dict):
+                    raise UploadError("unexpected Open Cloud response: %s" % str(data)[:300])
+                return data
             except urllib.error.HTTPError as e:
                 if e.code in (401, 403):
                     raise UploadError(AUTH_MESSAGE) from None
@@ -115,7 +124,7 @@ class OpenCloud:
                 else:
                     raise UploadError("Open Cloud error %d: %s"
                                       % (e.code, e.read().decode(errors="replace")[:300])) from None
-            except OSError:  # URLError, timeouts, connection resets
+            except (OSError, http.client.HTTPException):  # URLError, timeouts, resets, bad status line
                 retry = True
             if retry:
                 if attempt >= len(BACKOFF):
@@ -123,6 +132,13 @@ class OpenCloud:
                                       % len(BACKOFF)) from None
                 self.sleep(BACKOFF[attempt])
         raise UploadError("unreachable")
+
+    @staticmethod
+    def _shape(fn, op):
+        try:
+            return fn(op)
+        except (KeyError, IndexError, TypeError, AttributeError):
+            raise UploadError("unexpected Open Cloud response: %s" % json.dumps(op)[:300]) from None
 
     def upload(self, path: Path, asset_type: str, display_name: str) -> str:
         path = Path(path)
@@ -139,20 +155,20 @@ class OpenCloud:
                 headers={API_KEY_HEADER: self.api_key, "Content-Type": ctype})
 
         op = self._send(make_post)
-        op_id = operation_id(op)
+        op_id = self._shape(operation_id, op)
         for _ in range(self.max_polls):
             if op.get("done"):
-                if is_rejected(op):
+                if self._shape(is_rejected, op):
                     raise ModerationRejected(path)
-                return asset_id_of(op)
+                return self._shape(asset_id_of, op)
             self.sleep(self.poll_interval)
             op = self._send(lambda: urllib.request.Request(
                 self.base_url + OPERATIONS_PATH + op_id,
                 headers={API_KEY_HEADER: self.api_key}))
         if op.get("done"):
-            if is_rejected(op):
+            if self._shape(is_rejected, op):
                 raise ModerationRejected(path)
-            return asset_id_of(op)
+            return self._shape(asset_id_of, op)
         raise UploadError("Timed out waiting for operation %s" % op_id)
 
 
@@ -184,13 +200,18 @@ def deliver_uploads(manifest: Dict, paths: AssetPaths, client: OpenCloud) -> Dic
     for fpath, atype, is_decal in work:
         digest = _sha256(Path(fpath))
         entry = cache["files"].get(digest)
+        if entry is not None and (
+                entry.get("creator_type", client.creator_type) != client.creator_type
+                or str(entry.get("creator_id", client.creator_id)) != str(client.creator_id)):
+            entry = None  # uploaded under a different owner: re-upload
         if entry is None:
             name = Path(fpath).stem
+            owner = {"creator_type": client.creator_type, "creator_id": str(client.creator_id)}
             try:
                 entry = {"id": client.upload(Path(fpath), atype, name),
-                         "type": atype, "name": name, "rejected": False}
+                         "type": atype, "name": name, "rejected": False, **owner}
             except ModerationRejected:
-                entry = {"id": "", "type": atype, "name": name, "rejected": True}
+                entry = {"id": "", "type": atype, "name": name, "rejected": True, **owner}
             cache["files"][digest] = entry
             tmp = cache_path.with_name(cache_path.name + ".tmp")
             tmp.write_text(json.dumps(cache, indent=2))

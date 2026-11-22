@@ -1,6 +1,6 @@
 """Vocabulary types describing what a builder accepts. bpy-free."""
 from dataclasses import dataclass
-from typing import Any, Dict, FrozenSet, Tuple
+from typing import Any, Callable, Dict, FrozenSet, Optional, Tuple
 
 PARAM_TYPES = ("number", "int", "bool", "object", "list", "string")
 
@@ -20,3 +20,5 @@ class Vocab:
     tiled_tags: FrozenSet[str]
     big_tags: FrozenSet[str]
     no_collide_tags: FrozenSet[str]
+    # optional bpy-free hook: validate(params, budgets) raises ValueError (load_spec wraps it in SpecError)
+    validate: Optional[Callable[[Dict, Dict], None]] = None

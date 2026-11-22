@@ -7,11 +7,12 @@ from typing import Dict, List
 MAP_PROPS = [("color", "ColorMap"), ("normal", "NormalMap"),
              ("roughness", "RoughnessMap"), ("metalness", "MetalnessMap")]
 DECAL_THICKNESS = 0.05
+STUDS_PER_UNIT = 1.0  # Blender unit -> studs; Task 1 corrects the scale here
 
 
 def to_studio(v: List[float]) -> List[float]:
     """Blender (x, y, z; z up) -> Studio (x, z, -y)."""
-    return [v[0], v[2], -v[1]]
+    return [v[0] * STUDS_PER_UNIT, v[2] * STUDS_PER_UNIT, -v[1] * STUDS_PER_UNIT]
 
 
 def _s(text: str) -> str:
@@ -51,8 +52,14 @@ def generate_luau(manifest: Dict, ids: Dict[str, str], asset_name: str) -> str:
     if model_id is None:
         raise ValueError("no model asset id in ids")
 
+    if not manifest.get("meshes"):
+        raise ValueError("manifest has no meshes")
     mesh_lines = []
     for m in manifest["meshes"]:
+        required = ["color", "normal", "roughness"] + (["metalness"] if m.get("metal") else [])
+        for kind in required:
+            if kind not in m.get("maps", {}) or m["maps"][kind] not in ids:
+                raise ValueError("mesh %s is missing its %s map id" % (m["name"], kind))
         maps = ["%s = %s" % (k, _s(ids[m["maps"][k]]))
                 for k, _ in MAP_PROPS if k in m["maps"] and m["maps"][k] in ids]
         mesh_lines.append("\t{ name = %s, collide = %s, %s }" % (
@@ -63,10 +70,12 @@ def generate_luau(manifest: Dict, ids: Dict[str, str], asset_name: str) -> str:
         if d["image"] not in ids:  # rejected by moderation
             continue
         pos, nrm = to_studio(d["position"]), to_studio(d["normal"])
+        up = "Vector3.zAxis" if abs(nrm[1]) > 0.99 else "Vector3.yAxis"
         decal_lines.append(
-            "\t{ name = %s, image = %s, pos = %s, normal = %s, w = %s, h = %s, opacity = %s }" % (
-                _s(d["name"]), _s(ids[d["image"]]), _vec(pos), _vec(nrm),
-                _n(d["size"][0]), _n(d["size"][1]), _n(d["opacity"])))
+            "\t{ name = %s, image = %s, pos = %s, normal = %s, up = %s, w = %s, h = %s, opacity = %s }" % (
+                _s(d["name"]), _s(ids[d["image"]]), _vec(pos), _vec(nrm), up,
+                _n(d["size"][0] * STUDS_PER_UNIT), _n(d["size"][1] * STUDS_PER_UNIT),
+                _n(d["opacity"])))
 
     lo, hi = to_studio(manifest["bounds"]["min"]), to_studio(manifest["bounds"]["max"])
     # to_studio can flip an axis, so re-sort per axis
@@ -145,7 +154,7 @@ for _, spec in ipairs(DECALS) do
 	p.CanCollide = false
 	p.Transparency = 1
 	p.Size = Vector3.new(spec.w, spec.h, %(thick)s)
-	p.CFrame = CFrame.lookAt(spec.pos, spec.pos + spec.normal)
+	p.CFrame = CFrame.lookAt(spec.pos, spec.pos + spec.normal, spec.up)
 	local d = Instance.new("Decal")
 	d.Face = Enum.NormalId.Front
 	d.Texture = image(spec.image)

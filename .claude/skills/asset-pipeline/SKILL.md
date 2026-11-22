@@ -5,7 +5,7 @@ description: Run an asset design session with the creator using the rbxasset pip
 
 # Asset pipeline session
 
-An asset is `<area>/<name>` (example: `village/murder_house`). Its spec lives at `assets/<area>/<name>/spec.json`. Run commands from the repo root as `python -m rbxasset ...`. Exit codes: 0 ok, 2 validation or config error (fix the spec or config), 1 build or upload failure.
+An asset is `<area>/<name>` (example: `village/murder_house`). Its spec lives at `assets/<area>/<name>/spec.json`. Run commands from the repo root as `.venv/bin/python -m rbxasset ...`. Exit codes: 0 ok, 2 validation or config error (fix the spec or config), 1 build or upload failure.
 
 ## Session flow
 
@@ -13,8 +13,8 @@ Describe -> Sample -> Lock -> Build -> Deliver.
 
 1. Describe: the creator says what they want. Their words outrank any reference. Never invent the theme. Ask when something is unclear.
 2. Sample: see below.
-3. Lock: the creator picks a variant. Copy it to `spec.json` (or `python -m rbxasset new <area>/<name> --builder house|cabinet` for a skeleton).
-4. Build: `lockf .superpowers/blender.lock python -m rbxasset build <area>/<name>`. It prints a mesh/tris table and preview paths.
+3. Lock: the creator picks a variant. Copy it to `spec.json` (or `.venv/bin/python -m rbxasset new <area>/<name> --builder house|cabinet` for a skeleton).
+4. Build: `mkdir -p .superpowers && lockf .superpowers/blender.lock .venv/bin/python -m rbxasset build <area>/<name>`. It prints a mesh/tris table and preview paths.
 5. Deliver: only after approval (below).
 
 ## Token rules
@@ -29,7 +29,9 @@ Describe -> Sample -> Lock -> Build -> Deliver.
 
 Write 2-4 variant specs that differ in finishes or params, saved anywhere (for example `assets/<area>/<name>/variants/a.json`). Run:
 
-`lockf .superpowers/blender.lock python -m rbxasset sample <area>/<name> a.json b.json c.json`
+`mkdir -p .superpowers && lockf .superpowers/blender.lock .venv/bin/python -m rbxasset sample <area>/<name> a.json b.json c.json`
+
+Each variant is a path, or a bare name resolved under `assets/<area>/<name>/variants/` (so `a.json` works if saved there).
 
 Show the previews side by side and let the creator choose or mix.
 
@@ -49,8 +51,8 @@ Every spec has `design_notes`: a list of plain-words entries explaining each cho
 
 Delivery details are unverified. The Open Cloud request/response shapes and the Blender-to-Studio axis mapping stay unverified until Task 1, the live delivery spike with the creator, has run (`docs/findings/delivery.md`). If Task 1 has not run, run it before the first real `deliver`.
 
-1. Optional check: `python -m rbxasset deliver --dry-run <area>/<name>` writes the assemble script with fake ids and uploads nothing.
-2. `python -m rbxasset deliver <area>/<name>` (needs `ROBLOX_API_KEY` in `.env`). Uploads are cached by content hash in `roblox.json`, so a rerun re-uploads only what changed. Rejected decals are omitted. Exit 1 means upload failure, so rerun to resume.
+1. Optional check: `.venv/bin/python -m rbxasset deliver --dry-run <area>/<name>` writes the assemble script with fake ids and uploads nothing.
+2. `.venv/bin/python -m rbxasset deliver <area>/<name>` (needs `ROBLOX_API_KEY` in `.env`). Uploads are cached by content hash in `roblox.json`, so a rerun re-uploads only what changed. Rejected decals are omitted. Exit 1 means upload failure, so rerun to resume.
 3. Known limits: a retry after a timeout can duplicate an asset, and a crash mid-upload can orphan one. Tell the creator if either might have happened.
 4. Run `out/assemble.lua` (under the asset's directory) through the Studio MCP run-code tool if connected. Otherwise ask the creator to paste it into the Command Bar.
 5. Ask for a screenshot next to the character marker to check scale.

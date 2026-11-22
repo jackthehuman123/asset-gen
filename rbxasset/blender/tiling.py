@@ -8,13 +8,15 @@ from mathutils import Vector
 
 from . import finishes
 
+TILE_RECIPE = 2  # bump when finishes.py changes what a tile looks like
+
 # (kind, socket key, bake colorspace)
 _KINDS = (("color", "color", "sRGB"), ("roughness", "roughness", "Non-Color"),
           ("metalness", "metalness", "Non-Color"))
 
 
 def _hash(finish, wear, studs, res):
-    blob = json.dumps([finish, wear, studs, res], sort_keys=True)
+    blob = json.dumps([TILE_RECIPE, finish, wear, studs, res], sort_keys=True)
     return hashlib.sha256(blob.encode()).hexdigest()
 
 

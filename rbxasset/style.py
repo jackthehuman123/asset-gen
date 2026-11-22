@@ -53,6 +53,8 @@ class Style:
 
 
 def _read(path: Path) -> dict:
+    if not Path(path).is_file():
+        raise StyleError("no STYLE.md at %s" % path)
     return parse_style_md(Path(path).read_text(encoding="utf-8"))
 
 
@@ -69,7 +71,14 @@ def load_style(game_md: Path, area_md: Path) -> Style:
         raise StyleError("camera must be 'first_person' or 'third_person', got %r" % camera)
     studs = float(game.get("studs_per_tile", 4 if camera == "first_person" else 8))
     budgets = {"max_tris_per_mesh": MAX_TRIS, "texture_big": 1024, "texture_small": 512}
-    budgets.update(game.get("budgets", {}))
+    given = game.get("budgets", {})
+    if not isinstance(given, dict):
+        raise StyleError("budgets must be an object, got %r" % (given,))
+    budgets.update(given)
+    for k in ("max_tris_per_mesh", "texture_big", "texture_small"):
+        v = budgets[k]
+        if isinstance(v, bool) or not isinstance(v, (int, float)):
+            raise StyleError("budgets.%s must be a number, got %r" % (k, v))
     if budgets["max_tris_per_mesh"] > MAX_TRIS:
         raise StyleError("budgets.max_tris_per_mesh %s exceeds Roblox limit %d"
                          % (budgets["max_tris_per_mesh"], MAX_TRIS))
@@ -78,6 +87,8 @@ def load_style(game_md: Path, area_md: Path) -> Style:
             raise StyleError("budgets.%s %s exceeds Roblox limit %d"
                              % (k, budgets[k], MAX_TEXTURE))
     lighting = game.get("lighting", {"preset": "overcast_exterior"})
+    if not isinstance(lighting, dict):
+        raise StyleError("lighting must be an object, got %r" % (lighting,))
     preset = lighting.get("preset", "overcast_exterior")
     if preset not in LIGHTING_PRESETS:
         raise StyleError("lighting.preset %r is unknown; allowed: %s"

@@ -62,3 +62,19 @@ def test_unknown_lighting_preset_rejected_with_allowed_list(tmp_path):
         mk(tmp_path, {"lighting": {"preset": "disco"}}, {})
     assert "disco" in str(e.value) and "abandoned_interior" in str(e.value)
     assert mk(tmp_path, {"lighting": {"preset": "bright_interior"}}, {}).lighting["preset"] == "bright_interior"
+
+
+def test_malformed_budgets_and_lighting_are_style_errors(tmp_path):
+    with pytest.raises(StyleError, match="budgets.max_tris_per_mesh"):
+        mk(tmp_path, {"budgets": {"max_tris_per_mesh": "lots"}}, {})
+    with pytest.raises(StyleError, match="budgets must be an object"):
+        mk(tmp_path, {"budgets": 5}, {})
+    with pytest.raises(StyleError, match="lighting"):
+        mk(tmp_path, {"lighting": "dark"}, {})
+
+
+def test_missing_style_file_is_style_error(tmp_path):
+    g = tmp_path / "g.md"
+    g.write_text(md({}))
+    with pytest.raises(StyleError, match="no STYLE.md"):
+        load_style(g, tmp_path / "missing.md")

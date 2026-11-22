@@ -1,11 +1,10 @@
-"""Command line: build / sample / new. Exit codes: 0 ok, 1 build failure, 2 validation error."""
+"""Command line: build / sample / new / deliver. Exit codes: 0 ok, 1 build failure, 2 validation error."""
 import argparse
 import json
 import sys
+import zlib
 from pathlib import Path
 from typing import Dict, List, Optional
-
-import zlib
 
 from rbxasset import assemble, store
 from rbxasset.builders import REGISTRY, load_vocab
@@ -43,7 +42,10 @@ def _print_result(manifest: Dict, table: bool) -> None:
 def _load(root: Path, ref: str, spec_path: Path):
     area = ref.split("/")[0]
     cfg = load_config(root)
-    style = load_style(store.game_style_path(root), store.area_style_path(root, area))
+    area_md = store.area_style_path(root, area)
+    if not area_md.is_file():
+        raise StyleError("no STYLE.md for area '%s' at %s" % (area, area_md))
+    style = load_style(store.game_style_path(root), area_md)
     spec = load_spec(spec_path, style)
     return cfg, style, spec
 
@@ -64,6 +66,8 @@ def cmd_sample(root: Path, ref: str, variants: List[str]) -> int:
     loaded = []
     for v in variants:  # validate everything before starting Blender
         vp = Path(v)
+        if not vp.exists():
+            vp = paths.dir / "variants" / v
         loaded.append((vp.stem,) + _load(root, ref, vp))
     for stem, cfg, style, spec in loaded:
         out = paths.samples / stem
@@ -108,7 +112,10 @@ def cmd_deliver(root: Path, ref: str, dry_run: bool) -> int:
     paths = store.asset_paths(root, ref)
     if not paths.manifest.is_file():
         raise SpecError("%s not found; run build first" % paths.manifest)
-    manifest = json.loads(paths.manifest.read_text())
+    try:
+        manifest = json.loads(paths.manifest.read_text())
+    except ValueError as e:
+        raise SpecError("%s is not valid JSON (%s); rebuild" % (paths.manifest, e))
     if dry_run:
         ids = _fake_ids(manifest, paths)
     else:
@@ -155,3 +162,6 @@ def main(argv: Optional[List[str]] = None, root: Optional[Path] = None) -> int:
     except BuildError as e:
         print("build failed: %s" % e, file=sys.stderr)
         return 1
+    except OSError as e:
+        print("error: %s" % e, file=sys.stderr)
+        return 2

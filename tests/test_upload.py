@@ -241,3 +241,65 @@ def test_poll_403_gives_auth_message(fake, tmp_path):
     f.write_bytes(b"png")
     with pytest.raises(UploadError, match="user vs group"):
         client(fake).upload(f, "Decal", "x")
+
+
+def _png(tmp_path):
+    f = tmp_path / "x.png"
+    f.write_bytes(b"png")
+    return f
+
+
+def test_unexpected_post_shape_is_upload_error(fake, tmp_path):
+    fake.post_hook = lambda n: (200, {"nope": 1})
+    with pytest.raises(UploadError, match="unexpected Open Cloud response"):
+        client(fake).upload(_png(tmp_path), "Decal", "x")
+
+
+def test_unexpected_done_shape_is_upload_error(fake, tmp_path):
+    fake.post_hook = lambda n: (200, {"path": "operations/o", "done": True, "response": []})
+    with pytest.raises(UploadError, match="unexpected Open Cloud response"):
+        client(fake).upload(_png(tmp_path), "Decal", "x")
+
+
+def test_non_json_200_is_upload_error(fake, tmp_path):
+    def h(self):
+        self.rfile.read(int(self.headers["Content-Length"]))
+        data = b"<html>oops</html>"
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+    fake.server.RequestHandlerClass.do_POST = h
+    with pytest.raises(UploadError, match="unexpected Open Cloud response: <html>"):
+        client(fake).upload(_png(tmp_path), "Decal", "x")
+
+
+def test_http_exception_retries_then_upload_error(fake, tmp_path, monkeypatch):
+    import http.client
+
+    def boom(*a, **k):
+        raise http.client.RemoteDisconnected("gone")
+    monkeypatch.setattr(upload.urllib.request, "urlopen", boom)
+    sleeps = []
+    c = OpenCloud("K", "user", "1", base_url=fake.url, sleep=sleeps.append)
+    with pytest.raises(UploadError, match="unavailable"):
+        c.upload(_png(tmp_path), "Decal", "x")
+    assert sleeps == [1, 2, 4, 8, 16]
+
+
+def test_cache_miss_when_owner_differs_but_old_entries_match(fake, tmp_path):
+    manifest, paths = make_asset(tmp_path)
+    deliver_uploads(manifest, paths, client(fake))
+    n = len(fake.posts)
+    entries = json.loads(paths.roblox.read_text())["files"].values()
+    assert all(e["creator_type"] == "user" and e["creator_id"] == "42" for e in entries)
+    deliver_uploads(manifest, paths, client(fake))
+    assert len(fake.posts) == n  # same owner: cached
+    deliver_uploads(manifest, paths, client(fake, "group"))
+    assert len(fake.posts) == 2 * n  # different owner: re-upload
+    data = json.loads(paths.roblox.read_text())
+    for e in data["files"].values():
+        e.pop("creator_type"), e.pop("creator_id")
+    paths.roblox.write_text(json.dumps(data))
+    deliver_uploads(manifest, paths, client(fake))
+    assert len(fake.posts) == 2 * n  # legacy entries still match

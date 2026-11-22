@@ -90,3 +90,39 @@ def test_deliver_dry_run_writes_script_without_network(tmp_path, monkeypatch):
     first = out
     cli.main(["deliver", "house/cabinet", "--dry-run"], root=tmp_path)
     assert (a / "out" / "assemble.lua").read_text() == first
+
+
+def test_missing_required_map_raises_naming_mesh_and_kind():
+    import pytest
+    m = _manifest()
+    ids = _ids(m)
+    mesh = m["meshes"][0]
+    del ids[mesh["maps"]["normal"]]
+    with pytest.raises(ValueError) as e:
+        assemble.generate_luau(m, ids, "cabinet")
+    assert mesh["name"] in str(e.value) and "normal" in str(e.value)
+
+
+def test_missing_metalness_for_metal_mesh_raises():
+    import pytest
+    m = _manifest()
+    m["meshes"][0]["metal"] = True
+    with pytest.raises(ValueError, match="metalness"):
+        assemble.generate_luau(m, _ids(m), "cabinet")
+
+
+def test_empty_meshes_raises():
+    import pytest
+    m = _manifest()
+    m["meshes"] = []
+    with pytest.raises(ValueError, match="no meshes"):
+        assemble.generate_luau(m, _ids(m), "cabinet")
+
+
+def test_vertical_decal_gets_z_up_and_scale_applies():
+    m = _manifest()
+    d = m["decals"][0]
+    d["normal"] = [0, 0, 1]  # blender +z -> studio +y
+    s = assemble.generate_luau(m, _ids(m), "cabinet")
+    assert "up = Vector3.zAxis" in s
+    assert assemble.STUDS_PER_UNIT == 1.0

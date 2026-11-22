@@ -24,6 +24,9 @@ def run_blender(cfg: Config, job: Dict, timeout: int = 3600) -> Dict:
     job_path = out_dir / "job.json"
     job_path.write_text(json.dumps(job, indent=2))
     log_path = out_dir / "build.log"
+    stale = Path(job["manifest_path"])
+    if stale.exists():
+        stale.unlink()  # a failed build must not leave the previous manifest behind
     cmd = [cfg.blender, "-b", "--factory-startup", "--python-exit-code", "1",
            "--python", str(ENTRY), "--", str(job_path)]
     try:

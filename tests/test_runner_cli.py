@@ -122,3 +122,87 @@ def test_blender_timeout_raises_build_error(tmp_path):
     with pytest.raises(BuildError) as e:
         run_blender(cfg, job, timeout=1)
     assert "TIMEOUT" in str(e.value)
+
+
+def test_stale_manifest_removed_before_failed_build(tmp_path):
+    root, _ = make_project(tmp_path, FAKE_FAIL)
+    cfg = load_config(root)
+    out = root / "assets" / "farm" / "chest" / "out"
+    out.mkdir(parents=True)
+    (out / "manifest.json").write_text("{}")
+    job = {"mode": "build", "asset": "farm/chest", "out_dir": str(out),
+           "manifest_path": str(out / "manifest.json")}
+    with pytest.raises(BuildError):
+        run_blender(cfg, job)
+    assert not (out / "manifest.json").exists()
+
+
+def test_build_missing_spec_exits_2(tmp_path, capsys):
+    root, log = make_project(tmp_path, FAKE_OK)
+    assert cli.main(["build", "farm/nope"], root=root) == 2
+    err = capsys.readouterr().err
+    assert "run `new` first" in err and "Traceback" not in err
+    assert not log.exists()
+
+
+def test_unknown_area_style_exits_2(tmp_path, capsys):
+    root, _ = make_project(tmp_path, FAKE_OK)
+    (root / "assets" / "ghost" / "chest").mkdir(parents=True)
+    shutil.copy(root / "assets" / "farm" / "chest" / "spec.json",
+                root / "assets" / "ghost" / "chest" / "spec.json")
+    assert cli.main(["build", "ghost/chest"], root=root) == 2
+    assert "STYLE.md" in capsys.readouterr().err
+
+
+def test_sample_bare_variant_name_resolves_under_variants(tmp_path):
+    root, log = make_project(tmp_path, FAKE_OK)
+    v = root / "assets" / "farm" / "chest" / "variants"
+    v.mkdir()
+    shutil.copy(FIX / "cabinet_spec.json", v / "a.json")
+    assert cli.main(["sample", "farm/chest", "a.json"], root=root) == 0
+    assert cli.main(["sample", "farm/chest", "missing.json"], root=root) == 2
+
+
+def test_missing_config_key_exits_2(tmp_path, monkeypatch, capsys):
+    root, _ = make_project(tmp_path, FAKE_OK)
+    monkeypatch.delenv("ROBLOX_API_KEY", raising=False)
+    out = root / "assets" / "farm" / "chest" / "out"
+    out.mkdir(parents=True)
+    (out / "manifest.json").write_text(json.dumps({"meshes": [], "decals": []}))
+    assert cli.main(["deliver", "farm/chest"], root=root) == 2
+    assert "ROBLOX_API_KEY" in capsys.readouterr().err
+
+
+def test_deliver_missing_map_file_exits_2(tmp_path, capsys, monkeypatch):
+    root, _ = make_project(tmp_path, FAKE_OK)
+    out = root / "assets" / "farm" / "chest" / "out"
+    out.mkdir(parents=True)
+    (out / "asset.fbx").write_bytes(b"x")
+    (out / "manifest.json").write_text(json.dumps({
+        "fbx": str(out / "asset.fbx"), "bounds": {"min": [0, 0, 0], "max": [1, 1, 1]},
+        "meshes": [{"name": "m", "collide": True, "maps": {"color": str(out / "gone.png")}}],
+        "decals": []}))
+    monkeypatch.setenv("ROBLOX_API_KEY", "k")
+
+    class Stub:  # never touch the network
+        def __init__(self, key, ctype, cid):
+            self.creator_type, self.creator_id = ctype, cid
+
+        def upload(self, *a):
+            return "1"
+    monkeypatch.setattr(cli, "OpenCloud", Stub)
+    assert cli.main(["deliver", "farm/chest"], root=root) == 2
+
+
+def test_upload_error_exits_1(tmp_path, monkeypatch, capsys):
+    root, _ = make_project(tmp_path, FAKE_OK)
+    out = root / "assets" / "farm" / "chest" / "out"
+    out.mkdir(parents=True)
+    (out / "manifest.json").write_text(json.dumps({"meshes": [], "decals": []}))
+
+    def boom(*a, **k):
+        raise cli.UploadError("nope")
+    monkeypatch.setattr(cli, "deliver_uploads", boom)
+    monkeypatch.setenv("ROBLOX_API_KEY", "k")
+    assert cli.main(["deliver", "farm/chest"], root=root) == 1
+    assert "upload failed: nope" in capsys.readouterr().err

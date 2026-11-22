@@ -87,3 +87,58 @@ def test_validation_is_fast(style):
     t = time.time()
     load_spec(FIX / "house_spec.json", style)
     assert time.time() - t < 1.0
+
+
+def _house_style(tmp_path, mutate):
+    return write(tmp_path, "house_spec.json", mutate)
+
+
+@pytest.mark.parametrize("mutate,needle", [
+    (lambda d: d["params"]["facades"].pop("back"), "back"),
+    (lambda d: d["params"]["facades"].update(top=["wall"]), "top"),
+    (lambda d: d["params"]["facades"]["front"].__setitem__(0, "gate"), "gate"),
+    (lambda d: d["params"].update(boarded=[["front", 99]]), "out of range"),
+    (lambda d: d["params"].update(boarded=[["front", 0]]), "window"),
+    (lambda d: d["params"].update(door_open=[["front", 1, 0.5]]), "door"),
+    (lambda d: d["params"].update(door_open=[["front", 2]]), "list of 3"),
+    (lambda d: d["params"].update(boarded=[["roof", 1]]), "roof"),
+])
+def test_house_vocab_validate_rejects(style, tmp_path, mutate, needle):
+    with pytest.raises(SpecError) as e:
+        load_spec(_house_style(tmp_path, mutate), style)
+    assert needle in str(e.value)
+
+
+def test_house_36_wide_exceeds_tile_budget(style, tmp_path):
+    p = _house_style(tmp_path, lambda d: d["params"].update(width=36))
+    with pytest.raises(SpecError) as e:
+        load_spec(p, style)
+    assert "tiles_front" in str(e.value) and "max width" in str(e.value)
+    # default-sized fixture passes
+    assert load_spec(FIX / "house_spec.json", style)
+
+
+def test_tile_estimate_helper_matches_builder_math():
+    from rbxasset.builders.house import roof_math
+    assert roof_math.estimate_tile_tris(28, 20, 30, 3.2, 1.5) < 20000
+    w = roof_math.max_width(20000, 20, 30, 3.2, 1.5)
+    assert roof_math.estimate_tile_tris(w, 20, 30, 3.2, 1.5) <= 20000
+
+
+@pytest.mark.parametrize("mutate,needle", [
+    (lambda d: d.update(finish_overrides={"kawara": 5}), "finish_overrides.kawara"),
+    (lambda d: d.update(wear=[1]), "wear"),
+    (lambda d: d.update(decals=[5]), "decal 0"),
+    (lambda d: d.update(decals="x"), "decals"),
+    (lambda d: d.update(seed="abc"), "seed"),
+    (lambda d: d.update(parts=[]), "parts"),
+])
+def test_malformed_value_types_are_spec_errors(style, tmp_path, mutate, needle):
+    with pytest.raises(SpecError) as e:
+        load_spec(write(tmp_path, "house_spec.json", mutate), style)
+    assert needle in str(e.value)
+
+
+def test_missing_spec_file(style, tmp_path):
+    with pytest.raises(SpecError, match="run `new` first"):
+        load_spec(tmp_path / "nope.json", style)

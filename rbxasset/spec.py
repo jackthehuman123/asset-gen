@@ -72,8 +72,11 @@ def _vec(d, key, n, i):
 
 
 def load_spec(spec_path: Path, style: Style) -> ResolvedSpec:
+    spec_path = Path(spec_path)
+    if not spec_path.is_file():
+        raise SpecError("no spec at %s; run `new` first" % spec_path)
     try:
-        raw = json.loads(Path(spec_path).read_text(encoding="utf-8"))
+        raw = json.loads(spec_path.read_text(encoding="utf-8"))
     except ValueError as e:
         raise SpecError("spec is not valid JSON: %s" % e)
     if not isinstance(raw, dict):
@@ -86,6 +89,15 @@ def load_spec(spec_path: Path, style: Style) -> ResolvedSpec:
     if builder not in REGISTRY:
         raise SpecError("unknown builder %r; available: %s" % (builder, _names(REGISTRY)))
     vocab = load_vocab(builder)
+
+    for key, want in (("params", dict), ("parts", dict), ("finish_overrides", dict),
+                      ("wear", dict), ("decals", list)):
+        if not isinstance(raw.get(key, want()), want):
+            raise SpecError("spec key '%s' must be a JSON %s, got %r"
+                            % (key, "list" if want is list else "object", raw[key]))
+    seed = raw.get("seed", 0)
+    if isinstance(seed, bool) or not isinstance(seed, int):
+        raise SpecError("spec key 'seed' must be an integer, got %r" % (seed,))
 
     params = {}
     given = raw.get("params", {})
@@ -107,8 +119,12 @@ def load_spec(spec_path: Path, style: Style) -> ResolvedSpec:
         if name not in finishes:
             raise SpecError("finish_overrides names unknown finish '%s'; available: %s"
                             % (name, _names(finishes)))
+        if not isinstance(over, dict):
+            raise SpecError("finish_overrides.%s must be an object, got %r" % (name, over))
         finishes[name] = _deep_merge(finishes[name], over)
     for name, f in finishes.items():
+        if not isinstance(f, dict):
+            raise SpecError("finish '%s' must be an object, got %r" % (name, f))
         if f.get("type") not in FINISH_TYPES:
             raise SpecError("finish '%s' has bad type %r; allowed: %s"
                             % (name, f.get("type"), ", ".join(FINISH_TYPES)))
@@ -129,6 +145,8 @@ def load_spec(spec_path: Path, style: Style) -> ResolvedSpec:
 
     decals = raw.get("decals", [])
     for i, d in enumerate(decals):
+        if not isinstance(d, dict):
+            raise SpecError("decal %d must be an object, got %r" % (i, d))
         if d.get("kind") not in DECAL_KINDS:
             raise SpecError("decal %d: bad kind %r; allowed: %s"
                             % (i, d.get("kind"), ", ".join(DECAL_KINDS)))
@@ -143,9 +161,15 @@ def load_spec(spec_path: Path, style: Style) -> ResolvedSpec:
         if not isinstance(d.get("opacity", 1.0), (int, float)):
             raise SpecError("decal %d: 'opacity' must be a number" % i)
 
+    if vocab.validate is not None:
+        try:
+            vocab.validate(params, style.budgets)
+        except ValueError as e:
+            raise SpecError(str(e))
+
     wear = dict(style.wear)
     wear.update(raw.get("wear", {}))
     return ResolvedSpec(
-        builder=builder, seed=int(raw.get("seed", 0)), brief=raw.get("brief", ""),
+        builder=builder, seed=seed, brief=raw.get("brief", ""),
         params=params, parts=dict(parts), finishes=finishes, wear=wear,
         decals=copy.deepcopy(decals))

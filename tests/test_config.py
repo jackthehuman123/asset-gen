@@ -53,3 +53,18 @@ def test_creator_id_required_when_key_required(tmp_path, monkeypatch):
     with pytest.raises(ConfigError) as exc:
         load_config(tmp_path, require_key=True)
     assert "creator_id" in str(exc.value)
+
+
+def test_dotenv_export_and_quotes(tmp_path, monkeypatch):
+    monkeypatch.delenv("ROBLOX_API_KEY", raising=False)
+    write_config(tmp_path)
+    (tmp_path / ".env").write_text('export ROBLOX_API_KEY="abc123"\n')
+    assert load_config(tmp_path).api_key == "abc123"
+    (tmp_path / ".env").write_text("ROBLOX_API_KEY='k2'\n")
+    assert load_config(tmp_path).api_key == "k2"
+
+
+def test_malformed_config_json_names_file(tmp_path):
+    (tmp_path / "rbxasset.config.json").write_text("{nope")
+    with pytest.raises(ConfigError, match="rbxasset.config.json"):
+        load_config(tmp_path)

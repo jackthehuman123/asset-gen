@@ -31,8 +31,13 @@ def _read_dotenv(path: Path) -> Dict[str, str]:
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
+        if line.startswith("export "):
+            line = line[len("export "):].lstrip()
         key, _, value = line.partition("=")
-        values[key.strip()] = value.strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        values[key.strip()] = value
     return values
 
 
@@ -40,7 +45,12 @@ def load_config(root: Path, require_key: bool = False) -> Config:
     cfg_path = root / CONFIG_FILE
     if not cfg_path.is_file():
         raise ConfigError(f"missing {CONFIG_FILE} in {root}")
-    data = json.loads(cfg_path.read_text())
+    try:
+        data = json.loads(cfg_path.read_text())
+    except ValueError as e:
+        raise ConfigError(f"{CONFIG_FILE} is not valid JSON: {e}")
+    if not isinstance(data, dict):
+        raise ConfigError(f"{CONFIG_FILE} must be a JSON object")
 
     creator_type = str(data.get("creator_type", "user"))
     if creator_type not in ("user", "group"):

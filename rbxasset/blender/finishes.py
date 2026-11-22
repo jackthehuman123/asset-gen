@@ -22,7 +22,8 @@ def make_finish(name, f, wear, ctx, tile=None):
     now that blood is a Decal, kept for position-based layers.
     tile: tile size in studs. When set, every noise / Voronoi reads the bake plane's
     UV mapped onto a 4D torus (periodic in u and v); geometry/position layers
-    (grime, edge, moss up/low/crevice, dust, rust crevice) are skipped."""
+    (grime, edge, moss up/low/crevice, dust, rust crevice) are skipped. Moss is skipped
+    in tile mode unless the finish sets `tile_moss` (0-1), used as a low constant mask."""
     import math
     tiled = tile is not None
     skip = set(f.get("skip_wear", []))
@@ -289,10 +290,11 @@ def make_finish(name, f, wear, ctx, tile=None):
         color = lerp_c(color, rgb(f["edge_color"]), wear_m)
         rough = lerp_f(rough, 0.7, wear_m)
 
-    if WEAR.get("moss"):
+    tile_moss = f.get("tile_moss", 0.0) if tiled else None
+    if WEAR.get("moss") and (not tiled or tile_moss):
         ms = WEAR["moss"]
         if tiled:
-            where = 1.0
+            where = float(tile_moss)  # low constant: tiles carry no position cues
         else:
             up = smooth(nz_, 0.3, 0.9)
             low = m("SUBTRACT", 1.0, smooth(obj_z, 0.3, 2.5))

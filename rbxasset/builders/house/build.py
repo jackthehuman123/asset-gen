@@ -19,22 +19,14 @@ import bmesh
 import bpy
 from mathutils import Matrix, Vector
 
+from rbxasset.builders.house.roof_math import (
+    COVER_H, COVER_HW, COVER_SEGS, EAVE_LIP, LIP, PAN_HW, PAN_SAG, PAN_SEGS,
+    SLAB_T, STEP, TILE_BASE, TILE_LEN, TILE_PITCH, TILE_START, column_count, course_count)
 from rbxasset.builders.result import BuildResult
 
 TAGS = ("foundation", "frame", "siding", "plaster", "lattice", "doors", "boards",
         "engawa", "roof_base", "tiles_front", "tiles_back", "ridge", "eaves", "gable")
 
-TILE_PITCH = 0.6          # one pan + one cover
-PAN_HW, PAN_SAG = 0.27, 0.08      # pan half-width, depth of its dish
-COVER_HW, COVER_H = 0.13, 0.15    # cover half-width, height of its crown
-PAN_SEGS, COVER_SEGS = 3, 4       # profile segments across a tile (shallow pan needs few)
-COURSE = 1.1              # target course spacing along the slope
-TILE_LEN = 1.35           # tile length (overlaps the course below by TILE_LEN - COURSE)
-STEP = 0.12               # a tile's lower end sits this much higher than its upper end
-LIP = 0.15                # lip face depth at a tile's lower end
-EAVE_LIP = 0.35           # eave tiles: deeper cap hiding the slab edge
-TILE_BASE = 0.02          # pan bottom above the slab top
-SLAB_T = 0.4
 
 
 class Facade:
@@ -273,8 +265,8 @@ class _House:
         """One column of tile courses down the slope; the eave tile is capped.
         Courses are evenly spaced so the last one hangs just past the slab edge."""
         rng = self.rng
-        s0, s_end = 0.3, slab_l + 0.1
-        ncourse = max(1, int(math.ceil((s_end - s0 - TILE_LEN) / COURSE)) + 1)
+        s0, s_end = TILE_START, slab_l + 0.1
+        ncourse = course_count(slab_l)
         step = (s_end - s0 - TILE_LEN) / max(1, ncourse - 1)
         X0 = Vector((1, 0, 0))
         base = SLAB_T / 2 + TILE_BASE + (0.0 if concave else PAN_SAG * 0.3)
@@ -283,7 +275,6 @@ class _House:
                 continue
             s = s0 + k * step
             lift = 0.0
-            X, dd, nn = X0, d, n
             # tiny per-tile jitter so the rows aren't machine-perfect
             yaw = rng.uniform(-0.012, 0.012)
             off = rng.uniform(-0.01, 0.01)
@@ -294,7 +285,7 @@ class _House:
             R = Matrix.Rotation(yaw, 3, n)
             X, dd = R @ X0, R @ d
             top = ridge + d * s + n * (base + lift) + X0 * (x + off)
-            self.tile(tag, "%s_%d" % (name, k), top, X, dd, nn, concave, k == ncourse - 1)
+            self.tile(tag, "%s_%d" % (name, k), top, X, dd, n, concave, k == ncourse - 1)
 
     def roof(self):
         p, LX, PITCH, ZR = self.p, self.LX, self.PITCH, self.ZR
@@ -311,7 +302,7 @@ class _House:
             mid = ridge + d * (slab_l / 2)
             roof_objs.append(self.wbox("roof_base", mid, (LX, slab_l, SLAB_T), rot=rot))
             first = len(self.parts[tiles_tag])
-            ncols = int(LX / TILE_PITCH)
+            ncols = column_count(LX)
             for c in range(ncols):
                 xp = -LX / 2 + TILE_PITCH / 2 + c * TILE_PITCH
                 self.tile_column(tiles_tag, "pan_%s_%02d" % (tiles_tag[6:], c), ridge, d, n, slab_l,
