@@ -187,5 +187,57 @@ def test_rejected_texture_raises_after_saving_cache(fake, tmp_path):
     with pytest.raises(ModerationRejected) as e:
         deliver_uploads(manifest, paths, client(fake))
     assert e.value.path.name == "m0.png"
+    assert "m0.png" in str(e.value) and "delivery stopped" in str(e.value)
+    assert "roblox.json" in str(e.value)
     files = json.loads(paths.roblox.read_text())["files"]
     assert any(v["rejected"] for v in files.values())
+
+
+def test_corrupt_cache_gives_clear_error(fake, tmp_path):
+    manifest, paths = make_asset(tmp_path)
+    paths.roblox.write_text("{trunc")
+    with pytest.raises(UploadError, match="roblox.json is corrupt"):
+        deliver_uploads(manifest, paths, client(fake))
+    assert fake.posts == []
+
+
+def test_cache_written_atomically(fake, tmp_path):
+    manifest, paths = make_asset(tmp_path)
+    deliver_uploads(manifest, paths, client(fake))
+    assert not paths.roblox.with_name("roblox.json.tmp").exists()
+
+
+def test_socket_errors_retry_then_upload_error(fake, tmp_path, monkeypatch):
+    def boom(*a, **k):
+        raise ConnectionResetError("reset")
+    monkeypatch.setattr(upload.urllib.request, "urlopen", boom)
+    sleeps = []
+    c = OpenCloud("K", "user", "1", base_url=fake.url, sleep=sleeps.append)
+    f = tmp_path / "x.png"
+    f.write_bytes(b"png")
+    with pytest.raises(UploadError, match="unavailable"):
+        c.upload(f, "Decal", "x")
+    assert sleeps == [1, 2, 4, 8, 16]
+
+
+def test_poll_429_then_succeeds(fake, tmp_path):
+    orig = fake.server.RequestHandlerClass.do_GET
+    state = {"n": 0}
+
+    def get(self):
+        state["n"] += 1
+        if state["n"] == 1:
+            return self._send(429, {})
+        orig(self)
+    fake.server.RequestHandlerClass.do_GET = get
+    f = tmp_path / "x.png"
+    f.write_bytes(b"png")
+    assert client(fake).upload(f, "Decal", "x") == "1001"
+
+
+def test_poll_403_gives_auth_message(fake, tmp_path):
+    fake.server.RequestHandlerClass.do_GET = lambda self: self._send(403, {})
+    f = tmp_path / "x.png"
+    f.write_bytes(b"png")
+    with pytest.raises(UploadError, match="user vs group"):
+        client(fake).upload(f, "Decal", "x")

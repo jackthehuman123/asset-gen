@@ -8,9 +8,16 @@ deliver_uploads returns {file_path: asset_id} for every uploaded or cached,
 non-rejected file. Rejected decals are ABSENT from the result (recorded in
 roblox.json with rejected=true); callers should omit decals whose image is
 not in the result.
+
+Known limitations (need Task 1 data to solve):
+- Retrying a POST after a timeout can create a duplicate asset if the first
+  request actually reached Roblox.
+- A crash between the POST and operation completion orphans that asset; the
+  rerun re-uploads the file.
 """
 import hashlib
 import json
+import os
 import time
 import urllib.error
 import urllib.request
@@ -102,18 +109,18 @@ class OpenCloud:
                     return json.loads(resp.read().decode() or "{}")
             except urllib.error.HTTPError as e:
                 if e.code in (401, 403):
-                    raise UploadError(AUTH_MESSAGE)
+                    raise UploadError(AUTH_MESSAGE) from None
                 if e.code == 429 or e.code >= 500:
                     retry = True
                 else:
                     raise UploadError("Open Cloud error %d: %s"
-                                      % (e.code, e.read().decode(errors="replace")[:300]))
-            except urllib.error.URLError:
+                                      % (e.code, e.read().decode(errors="replace")[:300])) from None
+            except OSError:  # URLError, timeouts, connection resets
                 retry = True
             if retry:
                 if attempt >= len(BACKOFF):
                     raise UploadError("Open Cloud unavailable after %d retries"
-                                      % len(BACKOFF))
+                                      % len(BACKOFF)) from None
                 self.sleep(BACKOFF[attempt])
         raise UploadError("unreachable")
 
@@ -157,8 +164,14 @@ def deliver_uploads(manifest: Dict, paths: AssetPaths, client: OpenCloud) -> Dic
     cache_path = paths.roblox
     cache: Dict = {"files": {}}
     if cache_path.is_file():
-        cache = json.loads(cache_path.read_text())
-        cache.setdefault("files", {})
+        try:
+            cache = json.loads(cache_path.read_text())
+            cache.setdefault("files", {})
+        except (ValueError, AttributeError):
+            raise UploadError(
+                "%s is corrupt. Delete it to re-upload everything (existing Roblox "
+                "assets will be duplicated), or restore it from backup." % cache_path
+            ) from None
 
     work: List[Tuple[str, str, bool]] = [(str(paths.fbx), "Model", False)]
     for mesh in manifest.get("meshes", []):
@@ -179,10 +192,15 @@ def deliver_uploads(manifest: Dict, paths: AssetPaths, client: OpenCloud) -> Dic
             except ModerationRejected:
                 entry = {"id": "", "type": atype, "name": name, "rejected": True}
             cache["files"][digest] = entry
-            cache_path.write_text(json.dumps(cache, indent=2))
+            tmp = cache_path.with_name(cache_path.name + ".tmp")
+            tmp.write_text(json.dumps(cache, indent=2))
+            os.replace(str(tmp), str(cache_path))
         if entry["rejected"]:
             if is_decal:
                 continue
-            raise ModerationRejected(Path(fpath))
+            raise ModerationRejected(Path(fpath), (
+                "Roblox moderation rejected %s (%s); asset delivery stopped. If this is "
+                "a false positive, remove hash %s from %s and rerun."
+                % (Path(fpath).name, atype, digest, cache_path)))
         result[fpath] = entry["id"]
     return result
