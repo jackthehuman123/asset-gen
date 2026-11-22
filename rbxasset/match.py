@@ -1,6 +1,7 @@
 """Builder matching: how well does a request fit each registered builder? bpy-free.
 
-Score per builder = 1.0 if a `makes` phrase appears in the request (else 0.0),
+Score per builder = 1.0 if a `makes` phrase appears in the request (else 0.0; a longer phrase
+matched by another builder shadows a shorter one it contains),
 minus 0.4 for each `not_for` phrase that also appears; clamped to 0..1.
 Verdict: build >= BUILD; ask for ASK <= score < BUILD or when two builders at
 >= ASK are within TIE of each other; decline below ASK.
@@ -49,12 +50,23 @@ def registered_vocabs() -> Dict[str, Vocab]:
 def match_all(request: str, vocabs: Optional[Dict[str, Vocab]] = None) -> List[Match]:
     vocabs = vocabs if vocabs is not None else registered_vocabs()
     tokens = normalize(request)
+    found = {name: [p for p in v.makes if _contains(tokens, normalize(p))] for name, v in vocabs.items()}
     out = []
     for name, v in vocabs.items():
-        fit = [p for p in v.makes if _contains(tokens, normalize(p))]
+        # a longer phrase matched by another builder shadows a shorter one it contains
+        # ("japanese farmhouse" beats "farmhouse")
+        live, reasons = [], []
+        for p in found[name]:
+            pt = normalize(p)
+            shadow = next((q for other, qs in found.items() if other != name for q in qs
+                           if len(normalize(q)) > len(pt) and _contains(normalize(q), pt)), None)
+            if shadow:
+                reasons.append("'%s' is shadowed by '%s'" % (p, shadow))
+            else:
+                live.append(p)
         hits = [p for p in v.not_for if _contains(tokens, normalize(p))]
-        reasons = ["makes '%s'" % p for p in fit] + ["not for '%s'" % p for p in hits]
-        conf = 0.0 if not fit else max(0.0, min(1.0, 1.0 - PENALTY * len(hits)))
+        reasons = ["makes '%s'" % p for p in live] + reasons + ["not for '%s'" % p for p in hits]
+        conf = 0.0 if not live else max(0.0, min(1.0, 1.0 - PENALTY * len(hits)))
         out.append(Match(name, round(conf, 6), reasons))
     return sorted(out, key=lambda m: (-m.confidence, m.builder))
 

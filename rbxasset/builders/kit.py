@@ -1,6 +1,7 @@
 """Shared bpy primitives for builders. Runs inside Blender. Units: studs."""
 import bmesh
 import bpy
+import mathutils
 
 
 class Kit:
@@ -58,3 +59,32 @@ class Kit:
         o.location = loc
         bpy.context.scene.collection.objects.link(o)
         return self._add(tag, o)
+
+    def mesh(self, tag, verts, faces):
+        """A closed solid from raw verts and polygon faces (normals recalculated)."""
+        me = bpy.data.meshes.new(tag)
+        me.from_pydata(verts, [], faces)
+        me.update()
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(me)
+        bm.free()
+        o = bpy.data.objects.new(tag, me)
+        bpy.context.scene.collection.objects.link(o)
+        return self._add(tag, o)
+
+    def prism(self, tag, profile, x0, x1):
+        """Extrude a (y, z) polygon along x from x0 to x1."""
+        n = len(profile)
+        verts = [(x0, y, z) for y, z in profile] + [(x1, y, z) for y, z in profile]
+        faces = [list(range(n)), list(range(2 * n - 1, n - 1, -1))]
+        faces += [[i, (i + 1) % n, n + (i + 1) % n, n + i] for i in range(n)]
+        return self.mesh(tag, verts, faces)
+
+    @staticmethod
+    def rotate_z(objs, angle):
+        """Rotate objects about the world z axis through the origin."""
+        rz = mathutils.Matrix.Rotation(angle, 4, "Z")
+        for o in objs:
+            o.matrix_world = rz @ o.matrix_world

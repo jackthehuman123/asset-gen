@@ -173,6 +173,63 @@ def _stairs():
     check(res.parts["rail"] and not res.parts["risers"], "rail on, risers off")
 
 
+@specific("detached_house")
+def _detached_house():
+    tops = {}
+    for form in ("gable", "hip", "gambrel", "saltbox"):
+        _, res = build("detached_house", roof_form=form, chimney=False)
+        tops[form] = bbox(res)[5]
+        check(res.parts["roof"] and not res.parts["chimney"], form)
+    check(tops["gambrel"] > tops["gable"] * 0.9, tops)
+    _, one = build("detached_house", storeys=1)
+    h1 = bbox(one)[5]
+    _, two = build("detached_house", storeys=2)
+    check(bbox(two)[5] - h1 >= 8.0, "second storey adds height")
+    _, res = build("detached_house", porch=False)
+    check(len(res.parts["foundation"]) == 1, "no porch means one foundation box")
+    _, res = build("detached_house", bays=4, side_windows=0, back_windows=0)
+    check(len(res.parts["glazing"]) == 3, ("4 bays minus door, no side/back windows", len(res.parts["glazing"])))
+
+
+@specific("rowhouse")
+def _rowhouse():
+    _, res = build("rowhouse", floors=3)
+    check(abs(bbox(res)[5] - (3.6 + 3 * 9.5 + 1.3)) <= 0.05, bbox(res)[5])
+    _, res = build("rowhouse", stoop=False, cornice=False)
+    check(len(res.parts["foundation"]) == 1, "no stoop means one foundation box")
+    x0, x1 = bbox(res)[0:2]
+    check(abs((x1 - x0) - 14.1) <= 0.1, ("party-wall width", x1 - x0))
+
+
+@specific("apartment")
+def _apartment():
+    _, res = build("apartment", floors=4, columns=4, side_columns=2)
+    check(len(res.parts["glazing"]) == 4 * (2 * 4 + 2 * 2) - 1, len(res.parts["glazing"]))
+    _, res = build("apartment", floors=2, columns=2, side_columns=0)
+    check(len(res.parts["glazing"]) == 2 * 4 - 1, len(res.parts["glazing"]))
+
+
+@specific("cabin")
+def _cabin():
+    _, a = build("cabin", log_courses=9)
+    ha, logs = bbox(a)[5], len(a.parts["logs"])
+    _, b = build("cabin", log_courses=12)
+    check(logs > 20, logs)
+    check(bbox(b)[5] > ha + 1.5, "more courses make it taller")
+    _, res = build("cabin", porch=False, chimney=False)
+    check(not res.parts["chimney"] and len(res.parts["foundation"]) == 1, "no porch/chimney")
+
+
+@specific("barn")
+def _barn():
+    _, res = build("barn", length=40.0, width=22.0)
+    x0, x1, y0, y1, z0, z1 = bbox(res)
+    check(abs((y1 - y0) - (40.0 + 2 * 1.2)) <= 0.2, ("ridge runs along y", y1 - y0))
+    check(x1 - x0 >= 22.0, ("gable end width", x1 - x0))
+    _, res = build("barn", loft_door=False)
+    check(res.parts["door"], "big doors present")
+
+
 if __name__ == "__main__":
     which = sys.argv[sys.argv.index("--") + 1]
     kind, name = which.split(":", 1)

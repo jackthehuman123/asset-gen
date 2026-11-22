@@ -2,7 +2,8 @@ import pytest
 
 from tests.blender_harness import run_blender_script
 
-NEW = ("table", "chair", "shelf", "lamppost", "fence", "crate", "barrel", "stairs")
+NEW = ("table", "chair", "shelf", "lamppost", "fence", "crate", "barrel", "stairs",
+       "detached_house", "rowhouse", "apartment", "cabin", "barn")
 
 
 @pytest.mark.blender

@@ -32,3 +32,23 @@ Each test is `blueprint/out_<name>/{STYLE.md,spec.json,out/previews/}`. Peak mem
 | stairs | six steps with solid sides and handrails | concrete uses the stone cell pattern at a large scale |
 
 Not done (still declined): bed, tree (needs foliage and transparency).
+
+## House variety batch (2026-11-22)
+
+Research (roof-form guides, Pennsylvania SHPO house types, Philadelphia and DC rowhouse manuals) gave the archetypes: detached houses with gable, hip, gambrel or saltbox roofs; narrow rowhouses and brownstones (14-18 ft wide, raised basement, stoop, cornice); log cabins; barns (gambrel, big doors on the gable end); apartment blocks. The existing `house` builder is Japanese in form, so it now claims only Japanese terms and a plain "house" goes to the new `detached_house`.
+
+New builders: `detached_house`, `rowhouse`, `apartment`, `cabin`, `barn`, sharing `facade.py` (walls with openings) and `roofs.py` (four roof forms). Matcher gained shadowing: a longer phrase from one builder beats a shorter phrase it contains from another ("japanese farmhouse" over "farmhouse").
+
+`/test` runs (blueprint/out_house_gable, house_hip, house_gambrel, house_saltbox, rowhouse, apartment, cabin, barn; one shared buildings style): all built and read as their type.
+
+Weak points: brick is the stone finish, so walls show large cobble-like cells instead of brick coursing (a finish limitation); roofs are plain slabs with no shingle rows; windows are simple frames; the apartment is a box; the saltbox asymmetry is subtle from the wide view; porches are minimal.
+
+## Three realism levels (2026-11-22)
+
+`house_gable_r1..r3` (painted walls, tiled) and `cabin_r1..r3` (wood logs, untiled). Same spec and shape; only STYLE.md changes. L1 = type + one colour, no wear; L2 = roughness, light mottle, bump, edge colour, wear edge .3 / grime .35; L3 = mottle with mottle colour, cracks, orange peel, edge chips, wear edge .55 / grime .6 / dust / water stains / streaks.
+
+- L1 to L2: small gain (a touch of surface response, softer edges).
+- L2 to L3: the clear jump, but mostly from the finish recipe (mottle + cracks turn clapboard into blotchy plaster/stucco; shingle and door get visible variation). The wear layers (grime, dust, streaks, edge chips) barely show.
+- Why: tiled meshes (walls, roof, foundation) skip every position-based wear layer in the tile bake (grime, edge, moss, dust, rust crevice are skipped by design, see `finishes.py`), so for tiled parts only the noise in the recipe can add realism. Untiled wood (the cabin logs) does get wear, but it was subtle at preview distance.
+- Painted siding has no board lines in the tile, so mottle plus cracks reads as stucco. Realistic clapboard needs a siding-line option in the paint recipe (not available).
+- Cheapest ways to a higher level: an optional `tile_grime` for tiled finishes (a low constant plus noise, like `tile_moss`), a siding/brick line pattern, and roof shingle rows.

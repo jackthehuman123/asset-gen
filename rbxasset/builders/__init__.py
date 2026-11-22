@@ -16,6 +16,11 @@ REGISTRY: Dict[str, str] = {
     "crate": "rbxasset.builders.crate",
     "barrel": "rbxasset.builders.barrel",
     "stairs": "rbxasset.builders.stairs",
+    "detached_house": "rbxasset.builders.detached_house",
+    "rowhouse": "rbxasset.builders.rowhouse",
+    "apartment": "rbxasset.builders.apartment",
+    "cabin": "rbxasset.builders.cabin",
+    "barn": "rbxasset.builders.barn",
 }
 
 

@@ -62,7 +62,8 @@ def test_real_builders_cup_cabinet_asks():
 def test_real_builders_sideboard_and_cottage_build():
     r = match.registered_vocabs()
     assert top("scandinavian sideboard", r)[1:] == ("build",)
-    assert top("small cottage", r)[0].builder == "house"
+    assert top("small cottage", r)[0].builder == "detached_house"
+    assert top("japanese farmhouse", r)[0].builder == "house"
 
 
 def test_cli_match_prints_verdict_and_exits_0(capsys):
@@ -82,3 +83,12 @@ def test_every_makes_phrase_matches_only_its_own_builder_at_build():
             kind, best = match.verdict(ms)
             assert (best.builder if best else None, kind) == (name, "build"), \
                 "%r should build with %s, got %s" % (phrase, name, [(m.builder, m.confidence) for m in ms[:2]])
+
+
+def test_longer_phrase_shadows_shorter_phrase_of_another_builder():
+    vs = {"jp": vocab(["japanese farmhouse"]), "west": vocab(["farmhouse", "house"])}
+    ms = match.match_all("a japanese farmhouse", vs)
+    assert (ms[0].builder, ms[0].confidence) == ("jp", 1.0)
+    assert [m for m in ms if m.builder == "west"][0].confidence == 0.0
+    assert match.verdict(ms)[0] == "build"
+    assert match.match_all("farmhouse", vs)[0].builder == "west"
