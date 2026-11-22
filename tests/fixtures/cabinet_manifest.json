@@ -1,0 +1,129 @@
+{
+  "asset": "house/cabinet",
+  "mode": "build",
+  "fbx": "/abs/assets/house/cabinet/out/asset.fbx",
+  "bounds": {
+    "min": [
+      -2.4,
+      -0.7,
+      0.0
+    ],
+    "max": [
+      2.4,
+      0.7,
+      1.6
+    ]
+  },
+  "meshes": [
+    {
+      "name": "cabinet_top",
+      "tag": "top",
+      "finish": "stained_zelkova",
+      "tris": 400,
+      "tiled": true,
+      "metal": false,
+      "collide": true,
+      "maps": {
+        "color": "/abs/assets/house/cabinet/out/textures/cabinet_top_color.png",
+        "roughness": "/abs/assets/house/cabinet/out/textures/cabinet_top_roughness.png",
+        "normal": "/abs/assets/house/cabinet/out/textures/cabinet_top_normal.png"
+      }
+    },
+    {
+      "name": "cabinet_carcass",
+      "tag": "carcass",
+      "finish": "stained_zelkova",
+      "tris": 400,
+      "tiled": true,
+      "metal": false,
+      "collide": true,
+      "maps": {
+        "color": "/abs/assets/house/cabinet/out/textures/cabinet_carcass_color.png",
+        "roughness": "/abs/assets/house/cabinet/out/textures/cabinet_carcass_roughness.png",
+        "normal": "/abs/assets/house/cabinet/out/textures/cabinet_carcass_normal.png"
+      }
+    },
+    {
+      "name": "cabinet_legs",
+      "tag": "legs",
+      "finish": "stained_zelkova",
+      "tris": 400,
+      "tiled": true,
+      "metal": false,
+      "collide": true,
+      "maps": {
+        "color": "/abs/assets/house/cabinet/out/textures/cabinet_legs_color.png",
+        "roughness": "/abs/assets/house/cabinet/out/textures/cabinet_legs_roughness.png",
+        "normal": "/abs/assets/house/cabinet/out/textures/cabinet_legs_normal.png"
+      }
+    },
+    {
+      "name": "cabinet_fronts",
+      "tag": "fronts",
+      "finish": "stained_zelkova_fronts",
+      "tris": 400,
+      "tiled": true,
+      "metal": false,
+      "collide": true,
+      "maps": {
+        "color": "/abs/assets/house/cabinet/out/textures/cabinet_fronts_color.png",
+        "roughness": "/abs/assets/house/cabinet/out/textures/cabinet_fronts_roughness.png",
+        "normal": "/abs/assets/house/cabinet/out/textures/cabinet_fronts_normal.png"
+      }
+    },
+    {
+      "name": "cabinet_handles",
+      "tag": "handles",
+      "finish": "forged_iron",
+      "tris": 400,
+      "tiled": false,
+      "metal": true,
+      "collide": true,
+      "maps": {
+        "color": "/abs/assets/house/cabinet/out/textures/cabinet_handles_color.png",
+        "roughness": "/abs/assets/house/cabinet/out/textures/cabinet_handles_roughness.png",
+        "normal": "/abs/assets/house/cabinet/out/textures/cabinet_handles_normal.png",
+        "metalness": "/abs/assets/house/cabinet/out/textures/cabinet_handles_metalness.png"
+      }
+    },
+    {
+      "name": "cabinet_foot_caps",
+      "tag": "foot_caps",
+      "finish": "forged_iron",
+      "tris": 400,
+      "tiled": true,
+      "metal": true,
+      "collide": true,
+      "maps": {
+        "color": "/abs/assets/house/cabinet/out/textures/cabinet_foot_caps_color.png",
+        "roughness": "/abs/assets/house/cabinet/out/textures/cabinet_foot_caps_roughness.png",
+        "normal": "/abs/assets/house/cabinet/out/textures/cabinet_foot_caps_normal.png",
+        "metalness": "/abs/assets/house/cabinet/out/textures/cabinet_foot_caps_metalness.png"
+      }
+    }
+  ],
+  "decals": [
+    {
+      "name": "blood_smear",
+      "image": "/abs/assets/house/cabinet/out/textures/blood_smear.png",
+      "on": "top",
+      "position": [
+        -1.2,
+        -0.7,
+        1.0
+      ],
+      "normal": [
+        0,
+        -1,
+        0
+      ],
+      "size": [
+        0.8,
+        0.6
+      ],
+      "opacity": 0.9
+    }
+  ],
+  "previews": [],
+  "bake_seconds": 1.0
+}

@@ -5,10 +5,13 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from rbxasset import store
+import zlib
+
+from rbxasset import assemble, store
 from rbxasset.builders import REGISTRY, load_vocab
 from rbxasset.config import ConfigError, load_config
 from rbxasset.runner import BuildError, run_blender
+from rbxasset.upload import ModerationRejected, OpenCloud, UploadError, deliver_uploads
 from rbxasset.spec import SpecError, load_spec
 from rbxasset.style import StyleError, load_style
 
@@ -93,6 +96,32 @@ def cmd_new(root: Path, ref: str, builder: str) -> int:
     return 0
 
 
+def _fake_ids(manifest: Dict, paths) -> Dict[str, str]:
+    files = [str(paths.fbx)]
+    for m in manifest.get("meshes", []):
+        files.extend(str(p) for p in m.get("maps", {}).values())
+    files.extend(str(d["image"]) for d in manifest.get("decals", []))
+    return {f: str(1000000 + zlib.crc32(f.encode("utf-8")) % 9000000) for f in files}
+
+
+def cmd_deliver(root: Path, ref: str, dry_run: bool) -> int:
+    paths = store.asset_paths(root, ref)
+    if not paths.manifest.is_file():
+        raise SpecError("%s not found; run build first" % paths.manifest)
+    manifest = json.loads(paths.manifest.read_text())
+    if dry_run:
+        ids = _fake_ids(manifest, paths)
+    else:
+        cfg = load_config(root, require_key=True)
+        client = OpenCloud(cfg.api_key, cfg.creator_type, cfg.creator_id)
+        ids = deliver_uploads(manifest, paths, client)
+    paths.assemble.parent.mkdir(parents=True, exist_ok=True)
+    paths.assemble.write_text(assemble.generate_luau(manifest, ids, ref.split("/")[1]))
+    print("wrote %s" % paths.assemble)
+    print("Run it via the Studio MCP run-code tool, or paste it into Studio's Command Bar.")
+    return 0
+
+
 def main(argv: Optional[List[str]] = None, root: Optional[Path] = None) -> int:
     ap = argparse.ArgumentParser(prog="rbxasset")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -104,6 +133,9 @@ def main(argv: Optional[List[str]] = None, root: Optional[Path] = None) -> int:
     n = sub.add_parser("new")
     n.add_argument("asset")
     n.add_argument("--builder", required=True)
+    dl = sub.add_parser("deliver")
+    dl.add_argument("asset")
+    dl.add_argument("--dry-run", action="store_true")
     args = ap.parse_args(argv)
     root = Path(root) if root else Path.cwd()
     try:
@@ -111,10 +143,15 @@ def main(argv: Optional[List[str]] = None, root: Optional[Path] = None) -> int:
             return cmd_build(root, args.asset)
         if args.cmd == "sample":
             return cmd_sample(root, args.asset, args.variants)
+        if args.cmd == "deliver":
+            return cmd_deliver(root, args.asset, args.dry_run)
         return cmd_new(root, args.asset, args.builder)
     except (SpecError, StyleError, ConfigError, ValueError) as e:
         print("error: %s" % e, file=sys.stderr)
         return 2
+    except (UploadError, ModerationRejected) as e:
+        print("upload failed: %s" % e, file=sys.stderr)
+        return 1
     except BuildError as e:
         print("build failed: %s" % e, file=sys.stderr)
         return 1
