@@ -254,10 +254,21 @@ def t_phonebooth_dims():
     check(abs((max(zs) - min(zs)) - (8.0 + 0.12 + 0.6)) <= 0.03, ("height", max(zs)))
     check(max(xs) - min(xs) >= 3.2 and max(ys) - min(ys) >= 3.0, "footprint")
     check(abs(max(xs) + min(xs)) <= 0.02 and abs(max(ys) + min(ys)) <= 0.08, "centred")
+    check(res.ctx["W"] == 3.2, res.ctx)
+    check([x[0] for x in res.shots] == ["wide", "close", "sign"], [x[0] for x in res.shots])
+    gz = [v.z for v in world_verts(res.parts["glazing"])]
+    check(abs(min(gz) - (0.25 + 0.85)) <= 0.05, ("glazing starts above the lower panels", min(gz)))
+    check(len(res.parts["sign"]) > 4 * 10, ("sign needs border, crown and letters", len(res.parts["sign"])))
+    check(len(res.parts["handle"]) >= 5, ("handle plate and hinges", len(res.parts["handle"])))
     for tag, objs in res.parts.items():
         check(joined_tris(objs) < MAX_TRIS, (tag, "over budget"))
-    check(res.ctx["W"] == 3.2, res.ctx)
     clear_scene()
+    p["lower_panel_height"] = 1.4
+    res = phonebooth_build.build(p, random.Random(1))
+    gz = [v.z for v in world_verts(res.parts["glazing"])]
+    check(abs(min(gz) - (0.25 + 1.4)) <= 0.05, ("lower_panel_height moves the glazing", min(gz)))
+    clear_scene()
+    p["lower_panel_height"] = 0.85
     p["glazing"] = False
     res = phonebooth_build.build(p, random.Random(1))
     check(not res.parts["glazing"], "glazing=False must leave the tag empty")

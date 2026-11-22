@@ -61,7 +61,7 @@ Every spec has `design_notes`: a list of plain-words entries explaining each cho
 
 ## Scope
 
-Builders today are `house`, `cabinet` and `phonebooth` (`ls rbxasset/builders` for the current list). When `match` declines, build a new builder (a package under `rbxasset/builders/<name>/` with `vocab.py` filling `makes`/`not_for`, `build.py`, a registry line, tests) without asking for approval, then re-run `match`. Each declares `makes` and `not_for` in its `vocab.py`; pick a builder with `.venv/bin/python -m rbxasset match <words>` (thresholds: build 0.8, ask 0.5, decline below). For an asset no builder fits, say a new builder is needed. Do not improvise a spec.
+Builders today: `house`, `cabinet`, `phonebooth`, and the generic props `table`, `chair`, `shelf`, `lamppost`, `fence`, `crate`, `barrel`, `stairs` (`ls rbxasset/builders` is the source of truth). When `match` declines, build a new builder (a package under `rbxasset/builders/<name>/` with `vocab.py` filling `makes`/`not_for`, `build.py`, a registry line, tests) without asking for approval, then re-run `match`. Each declares `makes` and `not_for` in its `vocab.py`; pick a builder with `.venv/bin/python -m rbxasset match <words>` (thresholds: build 0.8, ask 0.5, decline below). For an asset no builder fits, say a new builder is needed. Do not improvise a spec.
 
 ## Blender load
 

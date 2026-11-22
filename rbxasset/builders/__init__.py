@@ -8,6 +8,14 @@ REGISTRY: Dict[str, str] = {
     "cabinet": "rbxasset.builders.cabinet",
     "house": "rbxasset.builders.house",
     "phonebooth": "rbxasset.builders.phonebooth",
+    "table": "rbxasset.builders.table",
+    "chair": "rbxasset.builders.chair",
+    "shelf": "rbxasset.builders.shelf",
+    "lamppost": "rbxasset.builders.lamppost",
+    "fence": "rbxasset.builders.fence",
+    "crate": "rbxasset.builders.crate",
+    "barrel": "rbxasset.builders.barrel",
+    "stairs": "rbxasset.builders.stairs",
 }
 
 

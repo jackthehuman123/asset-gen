@@ -72,3 +72,13 @@ def test_cli_match_prints_verdict_and_exits_0(capsys):
 
 def test_cli_match_empty_request_exits_2(capsys):
     assert cli.main(["match", " "]) == 2
+
+
+def test_every_makes_phrase_matches_only_its_own_builder_at_build():
+    r = match.registered_vocabs()
+    for name, v in r.items():
+        for phrase in v.makes:
+            ms = match.match_all(phrase, r)
+            kind, best = match.verdict(ms)
+            assert (best.builder if best else None, kind) == (name, "build"), \
+                "%r should build with %s, got %s" % (phrase, name, [(m.builder, m.confidence) for m in ms[:2]])

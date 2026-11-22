@@ -12,6 +12,9 @@ def validate(params, budgets):
         v = params[k]
         if isinstance(v, bool) or not isinstance(v, int) or not lo <= v <= hi:
             raise ValueError("%s must be a whole number from %d to %d, got %r" % (k, lo, hi, v))
+    if not 0.4 <= params["lower_panel_height"] <= params["height"] / 3:
+        raise ValueError("lower_panel_height must be between 0.4 and height/3, got %r"
+                         % params["lower_panel_height"])
     if params["roof_rise"] < 0 or params["roof_rise"] > params["height"] / 4:
         raise ValueError("roof_rise must be between 0 and height/4, got %r" % params["roof_rise"])
 
@@ -26,7 +29,8 @@ VOCAB = Vocab(
         "pane_cols": ParamDef("int", default=3, doc="glazing columns per side"),
         "pane_rows": ParamDef("int", default=8, doc="glazing rows per side"),
         "roof_rise": _N(0.55, "how far the domed roof rises above its base"),
-        "sign_height": _N(0.5, "height of the sign panel under the roof"),
+        "sign_height": _N(0.55, "height of the sign panel under the roof"),
+        "lower_panel_height": _N(0.85, "height of the solid raised panels below the glazing"),
         "glazing": ParamDef("bool", default=True, doc="include the glazing mesh (set to Glass in Studio)"),
     },
     part_tags=("base", "frame", "door", "roof", "sign", "glazing", "handle"),
