@@ -12,12 +12,14 @@ from typing import Dict, List
 from rbxasset.builders import REGISTRY, load_vocab
 from rbxasset.style import Style
 
-FINISH_TYPES = ("wood", "paint", "metal", "stone")
+FINISH_TYPES = ("wood", "paint", "metal", "stone", "brick", "siding")
 REQUIRED_FINISH_KEYS = {
     "wood": ("base", "grain"),
     "paint": ("color",),
     "metal": ("color",),
     "stone": ("color_a", "color_b", "mortar"),
+    "brick": ("color_a", "color_b", "mortar"),
+    "siding": ("color",),
 }
 DECAL_KINDS = ("smear", "drips", "splatter")
 

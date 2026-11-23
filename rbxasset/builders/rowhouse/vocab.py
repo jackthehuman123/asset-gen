@@ -31,6 +31,6 @@ VOCAB = Vocab(
     big_tags=frozenset({"walls"}),
     no_collide_tags=frozenset({"trim"}),
     validate=validate,
-    makes=("rowhouse", "row house", "townhouse", "brownstone", "terraced house", "terrace house"),
+    makes=("rowhouse", "row house", "townhouse", "terraced house", "terrace house"),
     not_for=("detached house", "skyscraper", "apartment block", "castle"),
 )

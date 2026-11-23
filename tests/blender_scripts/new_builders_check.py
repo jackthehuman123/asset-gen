@@ -13,9 +13,10 @@ from mathutils import Vector  # noqa: E402
 from rbxasset.builders import REGISTRY, load_vocab  # noqa: E402
 
 MAX_TRIS = 20000
-NOCENTER = {"lamppost"}
-OPTIONAL = {"table": {"apron", "stretchers"}, "chair": {"back", "arms"}, "shelf": {"back"},
-            "lamppost": {"arm"}, "crate": {"lid"}, "barrel": {"lid"}, "stairs": {"rail"}}
+NOCENTER = {"lamppost", "victorian", "tudor", "craftsman"}
+OPTIONAL = {"warehouse": set(), "table": {"apron", "stretchers"}, "chair": {"back", "arms"}, "shelf": {"back"},
+            "lamppost": {"arm"}, "crate": {"lid"}, "barrel": {"lid"}, "stairs": {"rail"}, "art_deco_tower": {"groove"}, "church": {"iron"},
+            "colonial_revival": {"shutter"}}
 
 
 def check(cond, msg):
@@ -228,6 +229,96 @@ def _barn():
     check(x1 - x0 >= 22.0, ("gable end width", x1 - x0))
     _, res = build("barn", loft_door=False)
     check(res.parts["door"], "big doors present")
+
+
+def _count(res, tag):
+    return len(res.parts[tag])
+
+
+@specific("brownstone")
+def _brownstone():
+    _, a = build("brownstone", floors=3)
+    h3 = bbox(a)[5]
+    _, b = build("brownstone", floors=5)
+    check(bbox(b)[5] - h3 >= 2 * 10.5 - 0.2, "two more floors add two storeys")
+    _, res = build("brownstone", stoop=False, cornice=False, street=False)
+    check(not res.parts["ground"] and not res.parts["curb"], "no street means empty ground and curb")
+
+
+@specific("victorian")
+def _victorian():
+    _, a = build("victorian")
+    ra = _count(a, "roof")
+    _, b = build("victorian", turret=False, porch=False)
+    check(_count(b, "roof") < ra, "no turret or porch means fewer roof pieces")
+    check(len(b.parts["glass"]) > 8, "windows present")
+
+
+@specific("tudor")
+def _tudor():
+    _, res = build("tudor")
+    check(_count(res, "timber") > 40, ("half-timber overlay", _count(res, "timber")))
+    _, flat = build("tudor", jetty=0.0)
+    check(len(flat.parts["timber"]) > 20, "timber without jetty")
+
+
+@specific("craftsman")
+def _craftsman():
+    _, res = build("craftsman")
+    check(_count(res, "trim") > 60, ("rafter tails and beams", _count(res, "trim")))
+    check(_count(res, "brick") >= 4, "porch piers")
+
+
+@specific("colonial_revival")
+def _colonial():
+    _, a = build("colonial_revival", bays=5)
+    ga = _count(a, "glass")
+    _, b = build("colonial_revival", bays=7, portico=False)
+    check(_count(b, "glass") - ga == 8, ("two more bays add 8 panes", ga, _count(b, "glass")))
+
+
+@specific("art_deco_tower")
+def _deco():
+    _, a = build("art_deco_tower", crown=False)
+    ha = bbox(a)[5]
+    _, b = build("art_deco_tower", crown=True)
+    check(bbox(b)[5] > ha + 30, "crown and spire add height")
+    _, c = build("art_deco_tower", floors=12, setbacks=1)
+    check(bbox(c)[5] < ha, "fewer floors is shorter")
+
+
+@specific("haussmann")
+def _haussmann():
+    _, a = build("haussmann", floors=4)
+    ha = bbox(a)[5]
+    _, b = build("haussmann", floors=6, balconies=False)
+    check(bbox(b)[5] > ha + 2 * 10.0 - 0.3, "two more floors")
+    check(_count(b, "roof") >= 2 + 2 * 7, "mansard slopes and dormers")
+
+
+@specific("warehouse")
+def _warehouse():
+    _, a = build("warehouse")
+    ia = _count(a, "iron")
+    _, b = build("warehouse", fire_escape=False, water_tank=False)
+    check(_count(b, "iron") < ia and not b.parts["wood"], "no fire escape or tank")
+
+
+@specific("church")
+def _church():
+    _, a = build("church", bays=5)
+    ga = _count(a, "glass")
+    _, b = build("church", bays=7, nave_length=70.0)
+    check(_count(b, "glass") - ga == 4, ("two more bays add 4 windows", ga, _count(b, "glass")))
+    check(bbox(b)[5] > 60, "spire towers over the nave")
+
+
+@specific("shopfront_block")
+def _shops():
+    _, res = build("shopfront_block", shops=2)
+    check(res.parts["awning"] and res.parts["awning_b"], "two awning colours")
+    _, none = build("shopfront_block", awnings=False, fire_escape=False)
+    check(not none.parts["awning"] and not none.parts["awning_b"], "no awnings")
 
 
 if __name__ == "__main__":

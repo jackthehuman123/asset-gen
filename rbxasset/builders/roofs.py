@@ -70,3 +70,11 @@ def roof(kit, tags, form, W, D, zE, pitch_deg, eave):
     for x0, x1 in ((W / 2 - END_T, W / 2), (-W / 2, -W / 2 + END_T)):
         objs.append(kit.prism(tags["wall"], fill, x0, x1))
     return apex, objs
+
+
+def placed(objs, cx, cy, angle):
+    """Rotate roof objects about z, then move them to (cx, cy) (for wings and ridges along y)."""
+    import mathutils
+    m = mathutils.Matrix.Translation((cx, cy, 0.0)) @ mathutils.Matrix.Rotation(angle, 4, "Z")
+    for o in objs:
+        o.matrix_world = m @ o.matrix_world

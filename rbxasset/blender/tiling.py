@@ -8,7 +8,7 @@ from mathutils import Vector
 
 from . import finishes
 
-TILE_RECIPE = 2  # bump when finishes.py changes what a tile looks like
+TILE_RECIPE = 3  # bump when finishes.py changes what a tile looks like
 
 # (kind, socket key, bake colorspace)
 _KINDS = (("color", "color", "sRGB"), ("roughness", "roughness", "Non-Color"),
@@ -90,12 +90,13 @@ def _grain_axis(obj):
     return max(range(3), key=lambda i: abs(c[i]))
 
 
-def tile_uvs(obj, studs):
+def tile_uvs(obj, studs, use_grain=True):
     """Planar UVs = world coords / studs on the two axes perpendicular to each face's
-    dominant normal axis; U follows the grain axis when it lies in that plane."""
+    dominant normal axis; U follows the grain axis when it lies in that plane (wood only:
+    brick courses and siding boards must stay horizontal, whatever the part's longest side)."""
     mesh = obj.data
     uv = mesh.uv_layers.get("UVMap") or mesh.uv_layers.new(name="UVMap")
-    grain = _grain_axis(obj)
+    grain = _grain_axis(obj) if use_grain else None
     mw = obj.matrix_world
     for poly in mesh.polygons:
         n = mw.to_3x3() @ Vector(poly.normal)

@@ -52,3 +52,16 @@ Weak points: brick is the stone finish, so walls show large cobble-like cells in
 - Why: tiled meshes (walls, roof, foundation) skip every position-based wear layer in the tile bake (grime, edge, moss, dust, rust crevice are skipped by design, see `finishes.py`), so for tiled parts only the noise in the recipe can add realism. Untiled wood (the cabin logs) does get wear, but it was subtle at preview distance.
 - Painted siding has no board lines in the tile, so mottle plus cracks reads as stucco. Realistic clapboard needs a siding-line option in the paint recipe (not available).
 - Cheapest ways to a higher level: an optional `tile_grime` for tiled finishes (a low constant plus noise, like `tile_moss`), a siding/brick line pattern, and roof shingle rows.
+
+## Realistic buildings batch (2026-11-22)
+
+Complaint: the earlier house variants were not realistic, nowhere near the Flatiron spike. Reading the Flatiron spike: its realism comes from dense architectural geometry (rustication, hooded windows, cornice, oriels, storefronts, awnings, AC units), soot and colour-variant meshes chosen by geometry (tiles carry no position cues), and street context. None of that existed in the pipeline builders.
+
+What changed:
+1. New finishes: `brick` (coursed, per-brick tone, whole courses per tile so it repeats) and `siding` (clapboard lines), plus `tile_grime` for tiled finishes. Brick and clapboard now read as brick and clapboard (the earlier "brick" was cobbles).
+2. `rbxasset/builders/arch.py`: Face-based architectural library (walls split into colour-variant panels; plain/hooded/pedimented/surround/arched/gothic windows with sills, jambs, keystones and soot strips; doors with transoms; storefronts; cornices with brackets and dentils; string courses; quoins; rustication; balconies; oriels; porticos; columns; awnings; turrets; mansard frustums; half-timbering; fire escapes; street context).
+3. Ten builders: `brownstone`, `victorian`, `tudor`, `craftsman`, `colonial_revival`, `art_deco_tower`, `haussmann`, `warehouse`, `church`, `shopfront_block`. All built with a shared `blueprint/styles/city.style.md` and viewed.
+
+Pipeline bug found and fixed: every part is tagged with a "grain" axis along its longest side (meant for wood), and tiled UVs applied it to every finish, so tall wall panels (church, tower piers) got brick courses rotated 90 degrees. Grain now applies only to wood finishes.
+
+Weak points (honest): windows are boxes with sash bars (no real depth reveal beyond the inset glass); glass is an opaque dark tint, not transparent; there are no interiors; dormers, turret windows and the church spire are simple; the art deco tower reads as a plain setback office tower (no relief carving); no trees, lamps or street furniture (Flatiron had them); heavy buildings are slow to build (warehouse about 4 minutes) because every box is a Blender operator call; the realism levels finding earlier still holds for wear on tiled parts, but `tile_grime` and coursed brick now carry most of it.

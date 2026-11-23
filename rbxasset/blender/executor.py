@@ -97,7 +97,7 @@ def join_parts(parts, spec, vocab_sets, style, ctx, prefix) -> List[MeshInfo]:
             raise BudgetError(f"{o.name}: {tris} triangles > {max_tris}")
         tiled = tag in vocab_sets.get("tiled_tags", [])
         if tiled:
-            tiling.tile_uvs(o, style["studs_per_tile"])
+            tiling.tile_uvs(o, style["studs_per_tile"], use_grain=spec["finishes"][fin]["type"] == "wood")
         else:
             bpy.ops.object.mode_set(mode="EDIT")
             bpy.ops.mesh.select_all(action="SELECT")

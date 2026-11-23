@@ -1,4 +1,4 @@
-"""Procedural finish recipes (wood / paint / metal / stone + wear layers). Runs inside Blender."""
+"""Procedural finish recipes (wood / paint / metal / stone / brick / siding + wear layers). Runs inside Blender."""
 from collections import namedtuple
 
 import bpy
@@ -249,6 +249,56 @@ def make_finish(name, f, wear, ctx, tile=None):
         metal = 0.0
         bump_height = m("ADD", m("MULTIPLY", edge, 1.0), m("MULTIPLY", noise((1, 1, 1), 8, 6), 0.3))
         bump_strength = f.get("bump", 0.3)
+    elif t in ("brick", "siding"):
+        # Pattern lines run along U (tiled: tile UV, whole bricks/boards per tile so it repeats;
+        # untiled: studs, u = x + y, v = z). Colour comes from the node, bump from its mask.
+        if tiled:
+            vec = N.new("ShaderNodeTexCoord").outputs["UV"]
+        else:
+            ox, oy, oz = xyz(coord())
+            cb = N.new("ShaderNodeCombineXYZ")
+            L.new(m("ADD", ox, oy), cb.inputs["X"])
+            L.new(oz, cb.inputs["Y"])
+            vec = cb.outputs["Vector"]
+        if t == "brick":
+            bw, bh, ms = f.get("brick_w", 0.75), f.get("brick_h", 0.25), f.get("mortar_size", 0.035)
+            if tiled:
+                ncol = max(2, round(tile / bw))
+                nrow = max(2, round(tile / bh))
+                nrow += nrow % 2
+                bw, bh, ms = 1.0 / ncol, 1.0 / nrow, ms / tile
+            bk = N.new("ShaderNodeTexBrick")
+            bk.offset, bk.offset_frequency = 0.5, 2
+            bk.inputs["Color1"].default_value = lin(f["color_a"])
+            bk.inputs["Color2"].default_value = lin(f["color_b"])
+            bk.inputs["Mortar"].default_value = lin(f["mortar"])
+            bk.inputs["Scale"].default_value = 1.0
+            bk.inputs["Mortar Size"].default_value = ms
+            bk.inputs["Mortar Smooth"].default_value = 0.1
+            bk.inputs["Brick Width"].default_value = bw
+            bk.inputs["Row Height"].default_value = bh
+            L.new(vec, bk.inputs["Vector"])
+            tone = smooth(noise((1, 1, 1), 2.0, 4), 0.3, 0.7)
+            color = lerp_c(bk.outputs["Color"], rgb("#000000"), m("MULTIPLY", tone, 0.12))
+            rough = f.get("roughness", 0.85)
+            bump_height, bump_strength = bk.outputs["Fac"], f.get("bump", 0.4)
+        else:
+            bh = f.get("board_h", 0.5)
+            n = max(2, round(tile / bh)) if tiled else 1.0 / bh
+            sep = N.new("ShaderNodeSeparateXYZ")
+            L.new(vec, sep.inputs[0])
+            vv = m("MULTIPLY", sep.outputs["Y"], n)
+            frac = m("FRACT", vv)
+            idx = m("FLOOR", vv)
+            wn = N.new("ShaderNodeTexWhiteNoise")
+            wn.noise_dimensions = "1D"
+            L.new(idx, wn.inputs["W"])
+            groove = m("SUBTRACT", 1.0, smooth(frac, 0.0, 0.08))
+            shade = m("SUBTRACT", 1.0, m("MULTIPLY", m("ADD", groove, m("MULTIPLY", wn.outputs["Value"], 0.2)), 0.45))
+            color = lerp_c(rgb("#000000"), rgb(f["color"]), shade)
+            rough = f.get("roughness", 0.6)
+            bump_height, bump_strength = m("SUBTRACT", 1.0, groove), f.get("bump", 0.5)
+        metal = 0.0
     else:
         raise ValueError(f"unknown finish type {t}")
 
@@ -257,6 +307,10 @@ def make_finish(name, f, wear, ctx, tile=None):
         _, _, nz_ = xyz(tc.outputs["Normal"])
 
     # ---------------- wear layers
+    if tiled and f.get("tile_grime"):  # tiles carry no position cues: a patchy dirt film everywhere
+        film = smooth(noise((1, 1, 1), 1.5, 6), 0.35, 0.7)
+        color = lerp_c(color, rgb("#15110d"), m("MULTIPLY", film, 0.5 * f["tile_grime"]))
+
     if WEAR.get("water_stains"):
         field = noise((1, 1, 1), 1.2, 3, 0.5, 1.5)
         ring = m("SUBTRACT", smooth(field, 0.50, 0.53), smooth(field, 0.535, 0.56))
