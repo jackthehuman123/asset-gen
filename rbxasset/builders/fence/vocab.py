@@ -14,10 +14,14 @@ def validate(p, budgets):
     rules.num(p, "picket_gap", 0.02, 1.0)
     rules.choice(p, "picket_style", ("flat", "pointed"))
     if p["post_spacing"] > p["length"]:
-        raise ValueError("post_spacing %r cannot exceed length %r" % (p["post_spacing"], p["length"]))
+        raise ValueError(
+            "post_spacing %r cannot exceed length %r" % (p["post_spacing"], p["length"])
+        )
     n = int((p["length"] - p["post_size"]) // (p["picket_width"] + p["picket_gap"]))
     if n * 28 > 19000:
-        raise ValueError("too many pickets (%d); lengthen picket_width or picket_gap" % n)
+        raise ValueError(
+            "too many pickets (%d); lengthen picket_width or picket_gap" % n
+        )
 
 
 VOCAB = Vocab(

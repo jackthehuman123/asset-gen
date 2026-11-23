@@ -1,4 +1,5 @@
 """Slatted crate: stacked boards, corner battens, floor, optional lid. Runs inside Blender."""
+
 import random
 from typing import Dict
 
@@ -11,7 +12,17 @@ GAP = 0.05
 
 
 def build(params: Dict, rng: random.Random) -> BuildResult:
-    W, D, H, n, t, B = (params[x] for x in ("width", "depth", "height", "board_count", "board_thickness", "batten_size"))
+    W, D, H, n, t, B = (
+        params[x]
+        for x in (
+            "width",
+            "depth",
+            "height",
+            "board_count",
+            "board_thickness",
+            "batten_size",
+        )
+    )
     k = Kit(TAGS)
     bh = (H - (n - 1) * GAP) / n
     for i in range(n):
@@ -22,7 +33,11 @@ def build(params: Dict, rng: random.Random) -> BuildResult:
             k.box("boards", (t, D - 2 * t, bh), (sx * (W / 2 - t / 2), 0, z))
     for sx in (-1, 1):
         for sy in (-1, 1):
-            k.box("battens", (B, B, H), (sx * (W / 2 - B / 2), sy * (D / 2 - B / 2), H / 2))
+            k.box(
+                "battens",
+                (B, B, H),
+                (sx * (W / 2 - B / 2), sy * (D / 2 - B / 2), H / 2),
+            )
     k.box("battens", (W - 2 * t, D - 2 * t, 0.08), (0, 0, 0.04))
     if params["lid"]:
         m = 4

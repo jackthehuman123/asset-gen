@@ -1,4 +1,5 @@
 """Runs inside Blender: checks for the generic builders, selected by the first arg after '--'."""
+
 import importlib
 import random
 import sys
@@ -14,9 +15,19 @@ from rbxasset.builders import REGISTRY, load_vocab  # noqa: E402
 
 MAX_TRIS = 20000
 NOCENTER = {"lamppost", "victorian", "tudor", "craftsman"}
-OPTIONAL = {"warehouse": set(), "table": {"apron", "stretchers"}, "chair": {"back", "arms"}, "shelf": {"back"},
-            "lamppost": {"arm"}, "crate": {"lid"}, "barrel": {"lid"}, "stairs": {"rail"}, "art_deco_tower": {"groove"}, "church": {"iron"},
-            "colonial_revival": {"shutter"}}
+OPTIONAL = {
+    "warehouse": set(),
+    "table": {"apron", "stretchers"},
+    "chair": {"back", "arms"},
+    "shelf": {"back"},
+    "lamppost": {"arm"},
+    "crate": {"lid"},
+    "barrel": {"lid"},
+    "stairs": {"rail"},
+    "art_deco_tower": {"groove"},
+    "church": {"iron"},
+    "colonial_revival": {"shutter"},
+}
 
 
 def check(cond, msg):
@@ -88,7 +99,10 @@ def t_generic(name):
         check(tris(objs) < MAX_TRIS, (name, tag, "over budget"))
     check(res.shots and res.shots[0][0] == "wide", [s[0] for s in res.shots])
     for sname, loc, tgt, lens in res.shots:
-        check(len(loc) == 3 and len(tgt) == 3 and lens > 0 and Vector(loc) != Vector(tgt), sname)
+        check(
+            len(loc) == 3 and len(tgt) == 3 and lens > 0 and Vector(loc) != Vector(tgt),
+            sname,
+        )
     check({"W", "H"} <= set(res.ctx), res.ctx)
 
 
@@ -99,6 +113,7 @@ def specific(name):
     def deco(fn):
         SPECIFIC[name] = fn
         return fn
+
     return deco
 
 
@@ -125,7 +140,9 @@ def _shelf():
     _, res = build("shelf", shelf_count=3)
     check(len(res.parts["shelves"]) == 4, len(res.parts["shelves"]))
     _, res = build("shelf", shelf_count=1, back_panel=False, height=3.0)
-    check(len(res.parts["shelves"]) == 2 and not res.parts["back"], "min shelf, no back")
+    check(
+        len(res.parts["shelves"]) == 2 and not res.parts["back"], "min shelf, no back"
+    )
 
 
 @specific("lamppost")
@@ -169,7 +186,9 @@ def _stairs():
     _, res = build("stairs", steps=1)
     check(len(res.parts["treads"]) == 1, "one step")
     _, res = build("stairs", steps=8, rise=0.5)
-    check(len(res.parts["treads"]) == 8 and abs(bbox(res)[5] - 4.0) <= 0.02, bbox(res)[5])
+    check(
+        len(res.parts["treads"]) == 8 and abs(bbox(res)[5] - 4.0) <= 0.02, bbox(res)[5]
+    )
     _, res = build("stairs", handrail=True, risers=False, stringers=False)
     check(res.parts["rail"] and not res.parts["risers"], "rail on, risers off")
 
@@ -189,7 +208,10 @@ def _detached_house():
     _, res = build("detached_house", porch=False)
     check(len(res.parts["foundation"]) == 1, "no porch means one foundation box")
     _, res = build("detached_house", bays=4, side_windows=0, back_windows=0)
-    check(len(res.parts["glazing"]) == 3, ("4 bays minus door, no side/back windows", len(res.parts["glazing"])))
+    check(
+        len(res.parts["glazing"]) == 3,
+        ("4 bays minus door, no side/back windows", len(res.parts["glazing"])),
+    )
 
 
 @specific("rowhouse")
@@ -205,7 +227,9 @@ def _rowhouse():
 @specific("apartment")
 def _apartment():
     _, res = build("apartment", floors=4, columns=4, side_columns=2)
-    check(len(res.parts["glazing"]) == 4 * (2 * 4 + 2 * 2) - 1, len(res.parts["glazing"]))
+    check(
+        len(res.parts["glazing"]) == 4 * (2 * 4 + 2 * 2) - 1, len(res.parts["glazing"])
+    )
     _, res = build("apartment", floors=2, columns=2, side_columns=0)
     check(len(res.parts["glazing"]) == 2 * 4 - 1, len(res.parts["glazing"]))
 
@@ -218,7 +242,10 @@ def _cabin():
     check(logs > 20, logs)
     check(bbox(b)[5] > ha + 1.5, "more courses make it taller")
     _, res = build("cabin", porch=False, chimney=False)
-    check(not res.parts["chimney"] and len(res.parts["foundation"]) == 1, "no porch/chimney")
+    check(
+        not res.parts["chimney"] and len(res.parts["foundation"]) == 1,
+        "no porch/chimney",
+    )
 
 
 @specific("barn")
@@ -242,7 +269,10 @@ def _brownstone():
     _, b = build("brownstone", floors=5)
     check(bbox(b)[5] - h3 >= 2 * 10.5 - 0.2, "two more floors add two storeys")
     _, res = build("brownstone", stoop=False, cornice=False, street=False)
-    check(not res.parts["ground"] and not res.parts["curb"], "no street means empty ground and curb")
+    check(
+        not res.parts["ground"] and not res.parts["curb"],
+        "no street means empty ground and curb",
+    )
 
 
 @specific("victorian")
@@ -274,7 +304,10 @@ def _colonial():
     _, a = build("colonial_revival", bays=5)
     ga = _count(a, "glass")
     _, b = build("colonial_revival", bays=7, portico=False)
-    check(_count(b, "glass") - ga == 8, ("two more bays add 8 panes", ga, _count(b, "glass")))
+    check(
+        _count(b, "glass") - ga == 8,
+        ("two more bays add 8 panes", ga, _count(b, "glass")),
+    )
 
 
 @specific("art_deco_tower")
@@ -309,7 +342,10 @@ def _church():
     _, a = build("church", bays=5)
     ga = _count(a, "glass")
     _, b = build("church", bays=7, nave_length=70.0)
-    check(_count(b, "glass") - ga == 4, ("two more bays add 4 windows", ga, _count(b, "glass")))
+    check(
+        _count(b, "glass") - ga == 4,
+        ("two more bays add 4 windows", ga, _count(b, "glass")),
+    )
     check(bbox(b)[5] > 60, "spire towers over the nave")
 
 

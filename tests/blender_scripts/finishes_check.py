@@ -1,4 +1,5 @@
 """Runs inside Blender: builds each finish, bakes 64x64 maps via EMIT, asserts."""
+
 import sys
 from pathlib import Path
 
@@ -11,15 +12,24 @@ from rbxasset.blender import finishes  # noqa: E402
 
 RES = 64
 ALL_WEAR = {
-    "water_stains": 0.8, "streaks": {"amount": 0.8, "color": "#2a2a2a"},
-    "grime": 0.8, "edge": 0.8, "moss": {"amount": 0.8, "color": "#3a5a20"}, "dust": 0.8,
+    "water_stains": 0.8,
+    "streaks": {"amount": 0.8, "color": "#2a2a2a"},
+    "grime": 0.8,
+    "edge": 0.8,
+    "moss": {"amount": 0.8, "color": "#3a5a20"},
+    "dust": 0.8,
 }
 WOOD = {"type": "wood", "base": "#8a5a2b", "grain": "#4a2c10"}
 PAINT = {"type": "paint", "color": "#d8cfc0"}
 PLASTER = {"type": "paint", "color": "#d8cfc0", "mottle": 0.8, "cracks": 0.8}
 METAL = {"type": "metal", "color": "#9a9a9a"}
-STONE = {"type": "stone", "color_a": "#808080", "color_b": "#909090",
-         "mortar": "#ff0000", "cell_scale": 4.0}
+STONE = {
+    "type": "stone",
+    "color_a": "#808080",
+    "color_b": "#909090",
+    "mortar": "#ff0000",
+    "cell_scale": 4.0,
+}
 
 
 def make_cube():
@@ -61,8 +71,12 @@ def check(cond, msg):
 
 
 for label, fin, wear in [
-    ("wood", WOOD, {}), ("paint", PAINT, {}), ("plaster", PLASTER, {}),
-    ("metal", METAL, {}), ("stone", STONE, {}), ("wood+all_wear", WOOD, ALL_WEAR),
+    ("wood", WOOD, {}),
+    ("paint", PAINT, {}),
+    ("plaster", PLASTER, {}),
+    ("metal", METAL, {}),
+    ("stone", STONE, {}),
+    ("wood+all_wear", WOOD, ALL_WEAR),
 ]:
     px = bake(fin, "color", wear)
     check(px.std() > 0.01, f"{label} color constant (std={px.std():.4f})")

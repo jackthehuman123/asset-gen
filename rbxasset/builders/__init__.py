@@ -1,4 +1,5 @@
 """Builder registry. Never imports build.py (those need bpy)."""
+
 import importlib
 from typing import Dict
 
@@ -36,6 +37,7 @@ REGISTRY: Dict[str, str] = {
 
 def load_vocab(name: str) -> Vocab:
     if name not in REGISTRY:
-        raise KeyError("unknown builder %r; available: %s"
-                       % (name, ", ".join(sorted(REGISTRY))))
+        raise KeyError(
+            "unknown builder %r; available: %s" % (name, ", ".join(sorted(REGISTRY)))
+        )
     return importlib.import_module(REGISTRY[name] + ".vocab").VOCAB

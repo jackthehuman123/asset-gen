@@ -12,11 +12,19 @@ def validate(p, budgets):
     rules.num(p, "door_height", 5.0, 14.0)
     rules.num(p, "eave", 0.3, 3.0)
     if p["door_width"] > p["width"] - 4.0:
-        raise ValueError("door_width %r is too wide for width %r" % (p["door_width"], p["width"]))
+        raise ValueError(
+            "door_width %r is too wide for width %r" % (p["door_width"], p["width"])
+        )
     need = p["door_height"] + (5.0 if p["loft_door"] else 1.0)
     if need > p["wall_height"]:
-        raise ValueError("wall_height %r is too low for door_height %r%s"
-                         % (p["wall_height"], p["door_height"], " plus the loft door" if p["loft_door"] else ""))
+        raise ValueError(
+            "wall_height %r is too low for door_height %r%s"
+            % (
+                p["wall_height"],
+                p["door_height"],
+                " plus the loft door" if p["loft_door"] else "",
+            )
+        )
 
 
 VOCAB = Vocab(
@@ -26,7 +34,9 @@ VOCAB = Vocab(
         "wall_height": _N(13.0, "ground to the eave"),
         "door_width": _N(9.0),
         "door_height": _N(8.0),
-        "loft_door": ParamDef("bool", default=True, doc="small hayloft door above the big doors"),
+        "loft_door": ParamDef(
+            "bool", default=True, doc="small hayloft door above the big doors"
+        ),
         "eave": _N(1.2),
     },
     part_tags=("foundation", "walls", "trim", "roof", "door"),

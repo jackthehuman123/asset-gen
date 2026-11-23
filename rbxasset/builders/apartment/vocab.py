@@ -15,7 +15,10 @@ def validate(p, budgets):
         raise ValueError("too many window columns for the wall length")
     windows = p["floors"] * (2 * p["columns"] + 2 * p["side_columns"])
     if windows > 130:
-        raise ValueError("%d windows exceed the triangle budget (max 130); reduce floors or columns" % windows)
+        raise ValueError(
+            "%d windows exceed the triangle budget (max 130); reduce floors or columns"
+            % windows
+        )
 
 
 VOCAB = Vocab(
@@ -32,6 +35,13 @@ VOCAB = Vocab(
     big_tags=frozenset({"walls"}),
     no_collide_tags=frozenset({"trim"}),
     validate=validate,
-    makes=("apartment building", "apartment block", "apartment", "flats", "condo building", "office building"),
+    makes=(
+        "apartment building",
+        "apartment block",
+        "apartment",
+        "flats",
+        "condo building",
+        "office building",
+    ),
     not_for=("skyscraper", "house", "rowhouse", "castle"),
 )

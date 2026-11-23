@@ -14,7 +14,10 @@ def test_tiles_dir(tmp_path):
 
 def test_style_paths(tmp_path):
     assert game_style_path(tmp_path, "village") == tmp_path / "games/village/STYLE.md"
-    assert area_style_path(tmp_path, "village", "x") == tmp_path / "games/village/areas/x/STYLE.md"
+    assert (
+        area_style_path(tmp_path, "village", "x")
+        == tmp_path / "games/village/areas/x/STYLE.md"
+    )
 
 
 def test_bad_ref_rejected(tmp_path):
@@ -24,6 +27,11 @@ def test_bad_ref_rejected(tmp_path):
 
 
 def test_blueprint_paths(tmp_path):
-    assert asset_paths(tmp_path, "blueprint/house").dir == tmp_path / "blueprint/out_house"
+    assert (
+        asset_paths(tmp_path, "blueprint/house").dir == tmp_path / "blueprint/out_house"
+    )
     assert tiles_dir(tmp_path, "blueprint") == tmp_path / "blueprint/_tiles"
-    assert game_style_path(tmp_path, "blueprint", "house") == tmp_path / "blueprint/out_house/STYLE.md"
+    assert (
+        game_style_path(tmp_path, "blueprint", "house")
+        == tmp_path / "blueprint/out_house/STYLE.md"
+    )

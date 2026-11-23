@@ -19,8 +19,10 @@ def validate(p, budgets):
     rules.whole(p, "back_windows", 0, 5)
     rules.num(p, "porch_depth", 2.0, 8.0)
     if p["width"] < p["depth"]:
-        raise ValueError("width %r must be at least depth %r (the ridge runs along the width)"
-                         % (p["width"], p["depth"]))
+        raise ValueError(
+            "width %r must be at least depth %r (the ridge runs along the width)"
+            % (p["width"], p["depth"])
+        )
     if p["bays"] * 3.2 > p["width"]:
         raise ValueError("%d bays do not fit in width %r" % (p["bays"], p["width"]))
     if p["side_windows"] * 3.2 > p["depth"] or p["back_windows"] * 3.2 > p["width"]:
@@ -34,10 +36,16 @@ VOCAB = Vocab(
         "storeys": ParamDef("int", default=1, doc="1 to 3"),
         "storey_height": _N(8.5),
         "foundation_height": _N(1.2),
-        "roof_form": ParamDef("string", default="gable", doc="gable, hip, gambrel or saltbox"),
+        "roof_form": ParamDef(
+            "string", default="gable", doc="gable, hip, gambrel or saltbox"
+        ),
         "roof_pitch": _N(30.0, "degrees"),
         "eave": _N(1.5, "roof overhang"),
-        "bays": ParamDef("int", default=3, doc="window/door bays across the front; door in the middle one"),
+        "bays": ParamDef(
+            "int",
+            default=3,
+            doc="window/door bays across the front; door in the middle one",
+        ),
         "side_windows": ParamDef("int", default=2, doc="per floor, each side"),
         "back_windows": ParamDef("int", default=2, doc="per floor"),
         "porch": ParamDef("bool", default=True),
@@ -49,7 +57,15 @@ VOCAB = Vocab(
     big_tags=frozenset({"walls", "roof"}),
     no_collide_tags=frozenset({"trim"}),
     validate=validate,
-    makes=("house", "detached house", "cottage", "farmhouse", "bungalow", "colonial house",
-           "suburban house", "family house"),
+    makes=(
+        "house",
+        "detached house",
+        "cottage",
+        "farmhouse",
+        "bungalow",
+        "colonial house",
+        "suburban house",
+        "family house",
+    ),
     not_for=("rowhouse", "skyscraper", "castle", "tent", "mansion"),
 )

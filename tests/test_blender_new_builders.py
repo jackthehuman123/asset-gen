@@ -2,10 +2,31 @@ import pytest
 
 from tests.blender_harness import run_blender_script
 
-NEW = ("table", "chair", "shelf", "lamppost", "fence", "crate", "barrel", "stairs",
-       "detached_house", "rowhouse", "apartment", "cabin", "barn",
-       "brownstone", "victorian", "tudor", "craftsman", "colonial_revival", "art_deco_tower", "haussmann",
-       "warehouse", "church", "shopfront_block")
+NEW = (
+    "table",
+    "chair",
+    "shelf",
+    "lamppost",
+    "fence",
+    "crate",
+    "barrel",
+    "stairs",
+    "detached_house",
+    "rowhouse",
+    "apartment",
+    "cabin",
+    "barn",
+    "brownstone",
+    "victorian",
+    "tudor",
+    "craftsman",
+    "colonial_revival",
+    "art_deco_tower",
+    "haussmann",
+    "warehouse",
+    "church",
+    "shopfront_block",
+)
 
 
 @pytest.mark.blender

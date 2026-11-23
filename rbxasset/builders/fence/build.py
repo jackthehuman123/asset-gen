@@ -1,4 +1,5 @@
 """Fence run along x: posts, rails, pickets. Runs inside Blender."""
+
 import math
 import random
 from typing import Dict
@@ -28,9 +29,21 @@ def build(params: Dict, rng: random.Random) -> BuildResult:
     for i in range(n):
         x = -((n - 1) * step) / 2 + i * step
         if params["picket_style"] == "pointed":
-            k.box("pickets", (pw, 0.06, ph - 0.25), (x, y, 0.12 + (ph - 0.25) / 2), bevel=0.0)
-            k.cone("pickets", pw * 0.72, 0.0, 0.25, (x, y, 0.12 + ph - 0.125), verts=4,
-                   rot=(0, 0, math.pi / 4))
+            k.box(
+                "pickets",
+                (pw, 0.06, ph - 0.25),
+                (x, y, 0.12 + (ph - 0.25) / 2),
+                bevel=0.0,
+            )
+            k.cone(
+                "pickets",
+                pw * 0.72,
+                0.0,
+                0.25,
+                (x, y, 0.12 + ph - 0.125),
+                verts=4,
+                rot=(0, 0, math.pi / 4),
+            )
         else:
             k.box("pickets", (pw, 0.06, ph), (x, y, 0.12 + ph / 2), bevel=0.0)
     s = max(L, H)

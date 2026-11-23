@@ -1,4 +1,5 @@
 """Open shelf unit: sides, top, plinth, shelves, optional back. Runs inside Blender."""
+
 import random
 from typing import Dict
 
@@ -11,7 +12,13 @@ PLINTH = 0.25
 
 
 def build(params: Dict, rng: random.Random) -> BuildResult:
-    W, D, H, n, t = params["width"], params["depth"], params["height"], params["shelf_count"], params["board_thickness"]
+    W, D, H, n, t = (
+        params["width"],
+        params["depth"],
+        params["height"],
+        params["shelf_count"],
+        params["board_thickness"],
+    )
     k = Kit(TAGS)
     for sx in (-1, 1):
         k.box("frame", (t, D, H), (sx * (W / 2 - t / 2), 0, H / 2))
@@ -23,5 +30,9 @@ def build(params: Dict, rng: random.Random) -> BuildResult:
     for i in range(n + 1):
         k.box("shelves", (W - 2 * t, D - bp, t), (0, -bp / 2, zb + i * sp))
     if params["back_panel"]:
-        k.box("back", (W - 2 * t, bp, H - t - PLINTH), (0, D / 2 - bp / 2, PLINTH + (H - t - PLINTH) / 2))
+        k.box(
+            "back",
+            (W - 2 * t, bp, H - t - PLINTH),
+            (0, D / 2 - bp / 2, PLINTH + (H - t - PLINTH) / 2),
+        )
     return BuildResult(k.parts, default_shots(W, D, H), {"W": W, "H": H})

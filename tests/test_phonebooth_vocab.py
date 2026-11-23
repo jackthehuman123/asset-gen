@@ -11,10 +11,19 @@ def test_defaults_validate():
     V.validate(OK, {})
 
 
-@pytest.mark.parametrize("bad", [
-    {"width": 0.5}, {"height": 30}, {"pane_cols": 0}, {"pane_rows": 2.5}, {"pane_cols": True},
-    {"roof_rise": 5.0}, {"lower_panel_height": 0.1}, {"lower_panel_height": 9.0},
-])
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"width": 0.5},
+        {"height": 30},
+        {"pane_cols": 0},
+        {"pane_rows": 2.5},
+        {"pane_cols": True},
+        {"roof_rise": 5.0},
+        {"lower_panel_height": 0.1},
+        {"lower_panel_height": 9.0},
+    ],
+)
 def test_bad_params_rejected(bad):
     with pytest.raises(ValueError):
         V.validate({**OK, **bad}, {})

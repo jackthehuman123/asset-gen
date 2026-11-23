@@ -12,8 +12,10 @@ def validate(p, budgets):
     rules.whole(p, "shelf_count", 1, 12)
     gap = (p["height"] - p["board_thickness"] - 0.25) / (p["shelf_count"] + 1)
     if gap < 0.5:
-        raise ValueError("shelf_count %d leaves under 0.5 studs between shelves at height %s"
-                         % (p["shelf_count"], p["height"]))
+        raise ValueError(
+            "shelf_count %d leaves under 0.5 studs between shelves at height %s"
+            % (p["shelf_count"], p["height"])
+        )
 
 
 VOCAB = Vocab(
@@ -21,7 +23,9 @@ VOCAB = Vocab(
         "width": _N(3.6),
         "depth": _N(1.0),
         "height": _N(6.0),
-        "shelf_count": ParamDef("int", default=4, doc="inner shelves, plus the bottom one"),
+        "shelf_count": ParamDef(
+            "int", default=4, doc="inner shelves, plus the bottom one"
+        ),
         "board_thickness": _N(0.1),
         "back_panel": ParamDef("bool", default=True),
     },

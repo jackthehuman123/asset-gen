@@ -15,6 +15,7 @@ Known limitations (need Task 1 data to solve):
 - A crash between the POST and operation completion orphans that asset; the
   rerun re-uploads the file.
 """
+
 import hashlib
 import http.client
 import json
@@ -36,15 +37,18 @@ CONTENT_TYPES = {"Model": "model/fbx", "Decal": "image/png"}
 REJECTED_STATE = "Rejected"
 
 
-def build_request_json(asset_type: str, display_name: str, creator_type: str,
-                       creator_id: str) -> str:
+def build_request_json(
+    asset_type: str, display_name: str, creator_type: str, creator_id: str
+) -> str:
     key = "groupId" if creator_type == "group" else "userId"
-    return json.dumps({
-        "assetType": asset_type,
-        "displayName": display_name,
-        "description": "rbxasset",
-        "creationContext": {"creator": {key: str(creator_id)}},
-    })
+    return json.dumps(
+        {
+            "assetType": asset_type,
+            "displayName": display_name,
+            "description": "rbxasset",
+            "creationContext": {"creator": {key: str(creator_id)}},
+        }
+    )
 
 
 def operation_id(op: Dict) -> str:
@@ -58,6 +62,8 @@ def asset_id_of(op: Dict) -> str:
 def is_rejected(op: Dict) -> bool:
     mod = op.get("response", {}).get("moderationResult", {})
     return mod.get("moderationState") == REJECTED_STATE
+
+
 # ---------------------------------------------------------------------------
 
 AUTH_MESSAGE = (
@@ -77,23 +83,38 @@ class ModerationRejected(UploadError):
         self.path = Path(path)
 
 
-def _multipart(fields: List[Tuple[str, Optional[str], str, bytes]]) -> Tuple[bytes, str]:
+def _multipart(
+    fields: List[Tuple[str, Optional[str], str, bytes]],
+) -> Tuple[bytes, str]:
     boundary = uuid.uuid4().hex
     out = b""
     for name, filename, ctype, data in fields:
         disp = 'form-data; name="%s"' % name
         if filename:
             disp += '; filename="%s"' % filename
-        out += ("--%s\r\nContent-Disposition: %s\r\nContent-Type: %s\r\n\r\n"
-                % (boundary, disp, ctype)).encode() + data + b"\r\n"
+        out += (
+            (
+                "--%s\r\nContent-Disposition: %s\r\nContent-Type: %s\r\n\r\n"
+                % (boundary, disp, ctype)
+            ).encode()
+            + data
+            + b"\r\n"
+        )
     out += ("--%s--\r\n" % boundary).encode()
     return out, "multipart/form-data; boundary=" + boundary
 
 
 class OpenCloud:
-    def __init__(self, api_key: str, creator_type: str, creator_id: str,
-                 base_url: str = "https://apis.roblox.com", poll_interval: float = 1.0,
-                 max_polls: int = 120, sleep: Callable[[float], None] = time.sleep):
+    def __init__(
+        self,
+        api_key: str,
+        creator_type: str,
+        creator_id: str,
+        base_url: str = "https://apis.roblox.com",
+        poll_interval: float = 1.0,
+        max_polls: int = 120,
+        sleep: Callable[[float], None] = time.sleep,
+    ):
         self.api_key = api_key
         self.creator_type = creator_type
         self.creator_id = creator_id
@@ -111,10 +132,14 @@ class OpenCloud:
                 try:
                     data = json.loads(raw.decode() or "{}")
                 except ValueError:  # includes UnicodeDecodeError and JSONDecodeError
-                    raise UploadError("unexpected Open Cloud response: %s"
-                                      % raw.decode("utf-8", "replace")[:300]) from None
+                    raise UploadError(
+                        "unexpected Open Cloud response: %s"
+                        % raw.decode("utf-8", "replace")[:300]
+                    ) from None
                 if not isinstance(data, dict):
-                    raise UploadError("unexpected Open Cloud response: %s" % str(data)[:300])
+                    raise UploadError(
+                        "unexpected Open Cloud response: %s" % str(data)[:300]
+                    )
                 return data
             except urllib.error.HTTPError as e:
                 if e.code in (401, 403):
@@ -122,14 +147,20 @@ class OpenCloud:
                 if e.code == 429 or e.code >= 500:
                     retry = True
                 else:
-                    raise UploadError("Open Cloud error %d: %s"
-                                      % (e.code, e.read().decode(errors="replace")[:300])) from None
-            except (OSError, http.client.HTTPException):  # URLError, timeouts, resets, bad status line
+                    raise UploadError(
+                        "Open Cloud error %d: %s"
+                        % (e.code, e.read().decode(errors="replace")[:300])
+                    ) from None
+            except (
+                OSError,
+                http.client.HTTPException,
+            ):  # URLError, timeouts, resets, bad status line
                 retry = True
             if retry:
                 if attempt >= len(BACKOFF):
-                    raise UploadError("Open Cloud unavailable after %d retries"
-                                      % len(BACKOFF)) from None
+                    raise UploadError(
+                        "Open Cloud unavailable after %d retries" % len(BACKOFF)
+                    ) from None
                 self.sleep(BACKOFF[attempt])
         raise UploadError("unreachable")
 
@@ -138,21 +169,38 @@ class OpenCloud:
         try:
             return fn(op)
         except (KeyError, IndexError, TypeError, AttributeError):
-            raise UploadError("unexpected Open Cloud response: %s" % json.dumps(op)[:300]) from None
+            raise UploadError(
+                "unexpected Open Cloud response: %s" % json.dumps(op)[:300]
+            ) from None
 
     def upload(self, path: Path, asset_type: str, display_name: str) -> str:
         path = Path(path)
-        body, ctype = _multipart([
-            ("request", None, "application/json",
-             build_request_json(asset_type, display_name, self.creator_type,
-                                self.creator_id).encode()),
-            ("fileContent", path.name, CONTENT_TYPES[asset_type], path.read_bytes()),
-        ])
+        body, ctype = _multipart(
+            [
+                (
+                    "request",
+                    None,
+                    "application/json",
+                    build_request_json(
+                        asset_type, display_name, self.creator_type, self.creator_id
+                    ).encode(),
+                ),
+                (
+                    "fileContent",
+                    path.name,
+                    CONTENT_TYPES[asset_type],
+                    path.read_bytes(),
+                ),
+            ]
+        )
 
         def make_post():
             return urllib.request.Request(
-                self.base_url + ASSETS_PATH, data=body, method="POST",
-                headers={API_KEY_HEADER: self.api_key, "Content-Type": ctype})
+                self.base_url + ASSETS_PATH,
+                data=body,
+                method="POST",
+                headers={API_KEY_HEADER: self.api_key, "Content-Type": ctype},
+            )
 
         op = self._send(make_post)
         op_id = self._shape(operation_id, op)
@@ -162,9 +210,12 @@ class OpenCloud:
                     raise ModerationRejected(path)
                 return self._shape(asset_id_of, op)
             self.sleep(self.poll_interval)
-            op = self._send(lambda: urllib.request.Request(
-                self.base_url + OPERATIONS_PATH + op_id,
-                headers={API_KEY_HEADER: self.api_key}))
+            op = self._send(
+                lambda: urllib.request.Request(
+                    self.base_url + OPERATIONS_PATH + op_id,
+                    headers={API_KEY_HEADER: self.api_key},
+                )
+            )
         if op.get("done"):
             if self._shape(is_rejected, op):
                 raise ModerationRejected(path)
@@ -176,7 +227,9 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def deliver_uploads(manifest: Dict, paths: AssetPaths, client: OpenCloud) -> Dict[str, str]:
+def deliver_uploads(
+    manifest: Dict, paths: AssetPaths, client: OpenCloud
+) -> Dict[str, str]:
     cache_path = paths.roblox
     cache: Dict = {"files": {}}
     if cache_path.is_file():
@@ -201,17 +254,32 @@ def deliver_uploads(manifest: Dict, paths: AssetPaths, client: OpenCloud) -> Dic
         digest = _sha256(Path(fpath))
         entry = cache["files"].get(digest)
         if entry is not None and (
-                entry.get("creator_type", client.creator_type) != client.creator_type
-                or str(entry.get("creator_id", client.creator_id)) != str(client.creator_id)):
+            entry.get("creator_type", client.creator_type) != client.creator_type
+            or str(entry.get("creator_id", client.creator_id)) != str(client.creator_id)
+        ):
             entry = None  # uploaded under a different owner: re-upload
         if entry is None:
             name = Path(fpath).stem
-            owner = {"creator_type": client.creator_type, "creator_id": str(client.creator_id)}
+            owner = {
+                "creator_type": client.creator_type,
+                "creator_id": str(client.creator_id),
+            }
             try:
-                entry = {"id": client.upload(Path(fpath), atype, name),
-                         "type": atype, "name": name, "rejected": False, **owner}
+                entry = {
+                    "id": client.upload(Path(fpath), atype, name),
+                    "type": atype,
+                    "name": name,
+                    "rejected": False,
+                    **owner,
+                }
             except ModerationRejected:
-                entry = {"id": "", "type": atype, "name": name, "rejected": True, **owner}
+                entry = {
+                    "id": "",
+                    "type": atype,
+                    "name": name,
+                    "rejected": True,
+                    **owner,
+                }
             cache["files"][digest] = entry
             tmp = cache_path.with_name(cache_path.name + ".tmp")
             tmp.write_text(json.dumps(cache, indent=2))
@@ -219,9 +287,13 @@ def deliver_uploads(manifest: Dict, paths: AssetPaths, client: OpenCloud) -> Dic
         if entry["rejected"]:
             if is_decal:
                 continue
-            raise ModerationRejected(Path(fpath), (
-                "Roblox moderation rejected %s (%s); asset delivery stopped. If this is "
-                "a false positive, remove hash %s from %s and rerun."
-                % (Path(fpath).name, atype, digest, cache_path)))
+            raise ModerationRejected(
+                Path(fpath),
+                (
+                    "Roblox moderation rejected %s (%s); asset delivery stopped. If this is "
+                    "a false positive, remove hash %s from %s and rerun."
+                    % (Path(fpath).name, atype, digest, cache_path)
+                ),
+            )
         result[fpath] = entry["id"]
     return result

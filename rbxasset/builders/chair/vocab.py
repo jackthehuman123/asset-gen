@@ -20,7 +20,9 @@ VOCAB = Vocab(
         "seat_depth": _N(1.8),
         "seat_height": _N(1.5, "floor to seat top"),
         "back_height": _N(1.9, "backrest height above the seat"),
-        "back_style": ParamDef("string", default="slats", doc="slats, solid or none (a stool)"),
+        "back_style": ParamDef(
+            "string", default="slats", doc="slats, solid or none (a stool)"
+        ),
         "slat_count": ParamDef("int", default=4),
         "leg_size": _N(0.14),
         "arms": ParamDef("bool", default=False, doc="armrests"),

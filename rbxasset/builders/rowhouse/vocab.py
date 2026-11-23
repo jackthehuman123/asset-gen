@@ -17,12 +17,21 @@ def validate(p, budgets):
 
 VOCAB = Vocab(
     params={
-        "width": _N(14.0, "party-wall to party-wall; a real rowhouse is 14-18 ft, about 13-16 studs"),
+        "width": _N(
+            14.0,
+            "party-wall to party-wall; a real rowhouse is 14-18 ft, about 13-16 studs",
+        ),
         "depth": _N(36.0),
-        "floors": ParamDef("int", default=4, doc="storeys above the raised basement (2-5)"),
+        "floors": ParamDef(
+            "int", default=4, doc="storeys above the raised basement (2-5)"
+        ),
         "floor_height": _N(9.5),
         "basement_height": _N(3.6, "raised basement under the stoop"),
-        "bays": ParamDef("int", default=2, doc="windows across the front; the door takes the first bay"),
+        "bays": ParamDef(
+            "int",
+            default=2,
+            doc="windows across the front; the door takes the first bay",
+        ),
         "stoop": ParamDef("bool", default=True),
         "cornice": ParamDef("bool", default=True),
     },

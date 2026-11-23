@@ -12,7 +12,9 @@ def validate(p, budgets):
     rules.num(p, "board_thickness", 0.04, 0.4)
     rules.num(p, "batten_size", 0.08, 0.6)
     if p["height"] / p["board_count"] < 0.15:
-        raise ValueError("board_count %d is too many for height %r" % (p["board_count"], p["height"]))
+        raise ValueError(
+            "board_count %d is too many for height %r" % (p["board_count"], p["height"])
+        )
 
 
 VOCAB = Vocab(

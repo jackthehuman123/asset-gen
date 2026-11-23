@@ -6,6 +6,7 @@ minus 0.4 for each `not_for` phrase that also appears; clamped to 0..1.
 Verdict: build >= BUILD; ask for ASK <= score < BUILD or when two builders at
 >= ASK are within TIE of each other; decline below ASK.
 """
+
 import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
@@ -40,7 +41,9 @@ def normalize(text: str) -> List[str]:
 
 def _contains(tokens: List[str], phrase: List[str]) -> bool:
     n = len(phrase)
-    return n > 0 and any(tokens[i:i + n] == phrase for i in range(len(tokens) - n + 1))
+    return n > 0 and any(
+        tokens[i : i + n] == phrase for i in range(len(tokens) - n + 1)
+    )
 
 
 def registered_vocabs() -> Dict[str, Vocab]:
@@ -50,7 +53,10 @@ def registered_vocabs() -> Dict[str, Vocab]:
 def match_all(request: str, vocabs: Optional[Dict[str, Vocab]] = None) -> List[Match]:
     vocabs = vocabs if vocabs is not None else registered_vocabs()
     tokens = normalize(request)
-    found = {name: [p for p in v.makes if _contains(tokens, normalize(p))] for name, v in vocabs.items()}
+    found = {
+        name: [p for p in v.makes if _contains(tokens, normalize(p))]
+        for name, v in vocabs.items()
+    }
     out = []
     for name, v in vocabs.items():
         # a longer phrase matched by another builder shadows a shorter one it contains
@@ -58,14 +64,26 @@ def match_all(request: str, vocabs: Optional[Dict[str, Vocab]] = None) -> List[M
         live, reasons = [], []
         for p in found[name]:
             pt = normalize(p)
-            shadow = next((q for other, qs in found.items() if other != name for q in qs
-                           if len(normalize(q)) > len(pt) and _contains(normalize(q), pt)), None)
+            shadow = next(
+                (
+                    q
+                    for other, qs in found.items()
+                    if other != name
+                    for q in qs
+                    if len(normalize(q)) > len(pt) and _contains(normalize(q), pt)
+                ),
+                None,
+            )
             if shadow:
                 reasons.append("'%s' is shadowed by '%s'" % (p, shadow))
             else:
                 live.append(p)
         hits = [p for p in v.not_for if _contains(tokens, normalize(p))]
-        reasons = ["makes '%s'" % p for p in live] + reasons + ["not for '%s'" % p for p in hits]
+        reasons = (
+            ["makes '%s'" % p for p in live]
+            + reasons
+            + ["not for '%s'" % p for p in hits]
+        )
         conf = 0.0 if not live else max(0.0, min(1.0, 1.0 - PENALTY * len(hits)))
         out.append(Match(name, round(conf, 6), reasons))
     return sorted(out, key=lambda m: (-m.confidence, m.builder))
@@ -75,7 +93,10 @@ def verdict(matches: List[Match]) -> Tuple[str, Optional[Match]]:
     if not matches or matches[0].confidence < ASK:
         return "decline", None
     best = matches[0]
-    if len(matches) > 1 and matches[1].confidence >= ASK \
-            and round(best.confidence - matches[1].confidence, 6) <= TIE:
+    if (
+        len(matches) > 1
+        and matches[1].confidence >= ASK
+        and round(best.confidence - matches[1].confidence, 6) <= TIE
+    ):
         return "ask", best
     return ("build" if best.confidence >= BUILD else "ask"), best

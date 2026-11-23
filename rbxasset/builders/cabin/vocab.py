@@ -13,9 +13,13 @@ def validate(p, budgets):
     rules.num(p, "eave", 0.5, 4.0)
     rules.num(p, "porch_depth", 2.0, 8.0)
     if p["width"] < p["depth"]:
-        raise ValueError("width %r must be at least depth %r" % (p["width"], p["depth"]))
+        raise ValueError(
+            "width %r must be at least depth %r" % (p["width"], p["depth"])
+        )
     if p["log_courses"] * 2 * p["log_radius"] * 0.88 < 7.0:
-        raise ValueError("walls under 7 studs tall leave no room for the door; add courses or thicken logs")
+        raise ValueError(
+            "walls under 7 studs tall leave no room for the door; add courses or thicken logs"
+        )
 
 
 VOCAB = Vocab(

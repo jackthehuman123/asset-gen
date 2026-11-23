@@ -1,4 +1,5 @@
 """Barrel: revolved belly profile, metal hoops, optional lid. Runs inside Blender."""
+
 import math
 import random
 from typing import Dict
@@ -30,8 +31,17 @@ def build(params: Dict, rng: random.Random) -> BuildResult:
     for i in range(hoops):
         z = H * (0.12 + 0.76 * i / (hoops - 1))
         r = r_at(z)
-        k.revolve("hoops", [(r - 0.02, z - 0.07), (r + 0.05, z - 0.07), (r + 0.05, z + 0.07),
-                            (r - 0.02, z + 0.07)], segments=24, closed=True)
+        k.revolve(
+            "hoops",
+            [
+                (r - 0.02, z - 0.07),
+                (r + 0.05, z - 0.07),
+                (r + 0.05, z + 0.07),
+                (r - 0.02, z + 0.07),
+            ],
+            segments=24,
+            closed=True,
+        )
     s = max(2 * R, H)
     shots = [
         ("wide", (-s * 1.3, -s * 1.9, H * 0.8 + s * 0.3), (0.0, 0.0, H * 0.45), 40.0),

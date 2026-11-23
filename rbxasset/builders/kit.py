@@ -1,4 +1,5 @@
 """Shared bpy primitives for builders. Runs inside Blender. Units: studs."""
+
 import bmesh
 import bpy
 import mathutils
@@ -23,16 +24,26 @@ class Kit:
         return self._add(tag, o)
 
     def cyl(self, tag, r, depth, loc, rot=(0, 0, 0), verts=16):
-        bpy.ops.mesh.primitive_cylinder_add(vertices=verts, radius=r, depth=depth, location=loc, rotation=rot)
+        bpy.ops.mesh.primitive_cylinder_add(
+            vertices=verts, radius=r, depth=depth, location=loc, rotation=rot
+        )
         return self._add(tag, bpy.context.active_object)
 
     def cone(self, tag, r1, r2, depth, loc, rot=(0, 0, 0), verts=16):
-        bpy.ops.mesh.primitive_cone_add(vertices=verts, radius1=r1, radius2=r2, depth=depth,
-                                        location=loc, rotation=rot)
+        bpy.ops.mesh.primitive_cone_add(
+            vertices=verts,
+            radius1=r1,
+            radius2=r2,
+            depth=depth,
+            location=loc,
+            rotation=rot,
+        )
         return self._add(tag, bpy.context.active_object)
 
     def sphere(self, tag, r, loc, scale=(1, 1, 1)):
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=10, radius=r, location=loc)
+        bpy.ops.mesh.primitive_uv_sphere_add(
+            segments=16, ring_count=10, radius=r, location=loc
+        )
         o = bpy.context.active_object
         o.scale = scale
         bpy.ops.object.transform_apply(scale=True)
@@ -46,8 +57,15 @@ class Kit:
         es = [bm.edges.new((vs[i], vs[i + 1])) for i in range(len(vs) - 1)]
         if closed:
             es.append(bm.edges.new((vs[-1], vs[0])))
-        bmesh.ops.spin(bm, geom=vs + es, cent=(0, 0, 0), axis=(0, 0, 1), angle=6.283185307,
-                       steps=segments, use_merge=True)
+        bmesh.ops.spin(
+            bm,
+            geom=vs + es,
+            cent=(0, 0, 0),
+            axis=(0, 0, 1),
+            angle=6.283185307,
+            steps=segments,
+            use_merge=True,
+        )
         bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-4)
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
         mesh = bpy.data.meshes.new(tag)

@@ -1,4 +1,5 @@
 """Vocabulary types describing what a builder accepts. bpy-free."""
+
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, FrozenSet, Optional, Tuple
 

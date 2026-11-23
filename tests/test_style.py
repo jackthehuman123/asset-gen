@@ -8,13 +8,17 @@ def md(obj):
 
 
 def mk(tmp_path, game, area):
-    g = tmp_path / "g.md"; a = tmp_path / "a.md"
-    g.write_text(md(game)); a.write_text(md(area))
+    g = tmp_path / "g.md"
+    a = tmp_path / "a.md"
+    g.write_text(md(game))
+    a.write_text(md(area))
     return load_style(g, a)
 
 
 def test_parse_extracts_single_json_style_block():
-    assert parse_style_md("x\n```json style\n{\"a\": 1}\n```\ny\n```json\n{}\n```") == {"a": 1}
+    assert parse_style_md('x\n```json style\n{"a": 1}\n```\ny\n```json\n{}\n```') == {
+        "a": 1
+    }
 
 
 def test_parse_errors_on_missing_or_duplicate_block():
@@ -25,10 +29,17 @@ def test_parse_errors_on_missing_or_duplicate_block():
 
 
 def test_area_overrides_finish_by_name_and_merges_wear(tmp_path):
-    s = mk(tmp_path,
-           {"finishes": {"a": {"type": "paint", "color": "#111111"}, "b": {"type": "paint"}},
-            "wear": {"edge": 0.1, "grime": 0.2}},
-           {"finishes": {"a": {"type": "wood"}}, "wear": {"edge": 0.9}})
+    s = mk(
+        tmp_path,
+        {
+            "finishes": {
+                "a": {"type": "paint", "color": "#111111"},
+                "b": {"type": "paint"},
+            },
+            "wear": {"edge": 0.1, "grime": 0.2},
+        },
+        {"finishes": {"a": {"type": "wood"}}, "wear": {"edge": 0.9}},
+    )
     assert s.finishes["a"] == {"type": "wood"} and "b" in s.finishes
     assert s.wear == {"edge": 0.9, "grime": 0.2}
 
@@ -61,7 +72,10 @@ def test_unknown_lighting_preset_rejected_with_allowed_list(tmp_path):
     with pytest.raises(StyleError) as e:
         mk(tmp_path, {"lighting": {"preset": "disco"}}, {})
     assert "disco" in str(e.value) and "abandoned_interior" in str(e.value)
-    assert mk(tmp_path, {"lighting": {"preset": "bright_interior"}}, {}).lighting["preset"] == "bright_interior"
+    assert (
+        mk(tmp_path, {"lighting": {"preset": "bright_interior"}}, {}).lighting["preset"]
+        == "bright_interior"
+    )
 
 
 def test_malformed_budgets_and_lighting_are_style_errors(tmp_path):

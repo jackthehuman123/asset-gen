@@ -44,7 +44,11 @@ class Fake:
                         return self._send(*r)
                 name = body.split(b'"displayName": "')[1].split(b'"')[0].decode()
                 op = "op%d" % n
-                fake.ops[op] = {"left": fake.polls_needed, "name": name, "id": str(1000 + n)}
+                fake.ops[op] = {
+                    "left": fake.polls_needed,
+                    "name": name,
+                    "id": str(1000 + n),
+                }
                 self._send(200, {"path": "operations/" + op, "done": False})
 
             def do_GET(self):
@@ -54,8 +58,16 @@ class Fake:
                 if op["left"] > 0:
                     return self._send(200, {"path": self.path, "done": False})
                 state = "Rejected" if op["name"] in fake.reject else "Approved"
-                self._send(200, {"done": True, "response": {
-                    "assetId": op["id"], "moderationResult": {"moderationState": state}}})
+                self._send(
+                    200,
+                    {
+                        "done": True,
+                        "response": {
+                            "assetId": op["id"],
+                            "moderationResult": {"moderationState": state},
+                        },
+                    },
+                )
 
         self.server = HTTPServer(("127.0.0.1", 0), H)
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
@@ -74,14 +86,17 @@ def fake():
 
 
 def client(fake, ctype="user"):
-    return OpenCloud("KEY", ctype, "42", base_url=fake.url, poll_interval=0,
-                     sleep=lambda s: None)
+    return OpenCloud(
+        "KEY", ctype, "42", base_url=fake.url, poll_interval=0, sleep=lambda s: None
+    )
 
 
 def make_asset(tmp_path, n_maps=2, decal=True):
     d = tmp_path / "a"
     d.mkdir()
-    paths = AssetPaths(dir=d) if "dir" in AssetPaths.__dataclass_fields__ else AssetPaths(d)
+    paths = (
+        AssetPaths(dir=d) if "dir" in AssetPaths.__dataclass_fields__ else AssetPaths(d)
+    )
     paths.out.mkdir(parents=True, exist_ok=True)
     paths.textures.mkdir(parents=True, exist_ok=True)
     paths.fbx.write_bytes(b"fbxdata")
@@ -123,7 +138,9 @@ def test_auth_failure_message_mentions_user_vs_group(fake, tmp_path):
 def test_429_retries_then_succeeds(fake, tmp_path):
     fake.post_hook = lambda n: (429, {}) if n <= 2 else None
     sleeps = []
-    c = OpenCloud("K", "user", "1", base_url=fake.url, poll_interval=0, sleep=sleeps.append)
+    c = OpenCloud(
+        "K", "user", "1", base_url=fake.url, poll_interval=0, sleep=sleeps.append
+    )
     f = tmp_path / "x.png"
     f.write_bytes(b"png")
     assert c.upload(f, "Decal", "x")
@@ -150,7 +167,9 @@ def test_changed_file_reuploads_only_that_file(fake, tmp_path):
 
 def test_shared_maps_upload_once(fake, tmp_path):
     manifest, paths = make_asset(tmp_path, decal=False)
-    manifest["meshes"].append({"name": "n", "maps": dict(manifest["meshes"][0]["maps"])})
+    manifest["meshes"].append(
+        {"name": "n", "maps": dict(manifest["meshes"][0]["maps"])}
+    )
     deliver_uploads(manifest, paths, client(fake))
     assert len(fake.posts) == 3
 
@@ -210,6 +229,7 @@ def test_cache_written_atomically(fake, tmp_path):
 def test_socket_errors_retry_then_upload_error(fake, tmp_path, monkeypatch):
     def boom(*a, **k):
         raise ConnectionResetError("reset")
+
     monkeypatch.setattr(upload.urllib.request, "urlopen", boom)
     sleeps = []
     c = OpenCloud("K", "user", "1", base_url=fake.url, sleep=sleeps.append)
@@ -229,6 +249,7 @@ def test_poll_429_then_succeeds(fake, tmp_path):
         if state["n"] == 1:
             return self._send(429, {})
         orig(self)
+
     fake.server.RequestHandlerClass.do_GET = get
     f = tmp_path / "x.png"
     f.write_bytes(b"png")
@@ -256,7 +277,10 @@ def test_unexpected_post_shape_is_upload_error(fake, tmp_path):
 
 
 def test_unexpected_done_shape_is_upload_error(fake, tmp_path):
-    fake.post_hook = lambda n: (200, {"path": "operations/o", "done": True, "response": []})
+    fake.post_hook = lambda n: (
+        200,
+        {"path": "operations/o", "done": True, "response": []},
+    )
     with pytest.raises(UploadError, match="unexpected Open Cloud response"):
         client(fake).upload(_png(tmp_path), "Decal", "x")
 
@@ -269,6 +293,7 @@ def test_non_json_200_is_upload_error(fake, tmp_path):
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
     fake.server.RequestHandlerClass.do_POST = h
     with pytest.raises(UploadError, match="unexpected Open Cloud response: <html>"):
         client(fake).upload(_png(tmp_path), "Decal", "x")
@@ -279,6 +304,7 @@ def test_http_exception_retries_then_upload_error(fake, tmp_path, monkeypatch):
 
     def boom(*a, **k):
         raise http.client.RemoteDisconnected("gone")
+
     monkeypatch.setattr(upload.urllib.request, "urlopen", boom)
     sleeps = []
     c = OpenCloud("K", "user", "1", base_url=fake.url, sleep=sleeps.append)

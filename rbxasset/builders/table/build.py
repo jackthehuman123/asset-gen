@@ -1,4 +1,5 @@
 """Table: top, four legs, optional apron and stretchers. Runs inside Blender."""
+
 import random
 from typing import Dict
 

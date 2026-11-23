@@ -1,4 +1,5 @@
 """Seamless per-finish tiles and tile-aware UVs. Runs inside Blender."""
+
 import hashlib
 import json
 from pathlib import Path
@@ -11,8 +12,11 @@ from . import finishes
 TILE_RECIPE = 3  # bump when finishes.py changes what a tile looks like
 
 # (kind, socket key, bake colorspace)
-_KINDS = (("color", "color", "sRGB"), ("roughness", "roughness", "Non-Color"),
-          ("metalness", "metalness", "Non-Color"))
+_KINDS = (
+    ("color", "color", "sRGB"),
+    ("roughness", "roughness", "Non-Color"),
+    ("metalness", "metalness", "Non-Color"),
+)
 
 
 def _hash(finish, wear, studs, res):
@@ -25,8 +29,9 @@ def _bake_image(img_name, res, cs, bake_type, tree, tex_img):
     img.colorspace_settings.name = cs
     tex_img.image = img
     tree.nodes.active = tex_img
-    bpy.ops.object.bake(type=bake_type, margin=0, use_clear=True,
-                        normal_space="TANGENT")
+    bpy.ops.object.bake(
+        type=bake_type, margin=0, use_clear=True, normal_space="TANGENT"
+    )
     return img
 
 
@@ -34,16 +39,26 @@ def bake_tile(finish_name, finish, wear, studs, res, out_dir):
     """Bake color/roughness/(metalness)/normal PNGs for one finish; cached by hash."""
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    kinds = ["color", "roughness"] + (["metalness"] if finish.get("type") == "metal" else []) + ["normal"]
+    kinds = (
+        ["color", "roughness"]
+        + (["metalness"] if finish.get("type") == "metal" else [])
+        + ["normal"]
+    )
     paths = {k: str(out / f"{finish_name}_{k}.png") for k in kinds}
     hfile = out / f"{finish_name}.hash"
     h = _hash(finish, wear, studs, res)
-    if hfile.exists() and hfile.read_text() == h and all(Path(p).exists() for p in paths.values()):
+    if (
+        hfile.exists()
+        and hfile.read_text() == h
+        and all(Path(p).exists() for p in paths.values())
+    ):
         return paths
 
     bpy.ops.mesh.primitive_plane_add(size=1)
     plane = bpy.context.active_object
-    fn = finishes.make_finish(finish_name, finish, wear, {"W": studs, "H": studs}, tile=studs)
+    fn = finishes.make_finish(
+        finish_name, finish, wear, {"W": studs, "H": studs}, tile=studs
+    )
     plane.data.materials.append(fn.mat)
     tree = fn.mat.node_tree
     tex_img = tree.nodes.new("ShaderNodeTexImage")
@@ -71,7 +86,10 @@ def bake_tile(finish_name, finish, wear, studs, res, out_dir):
         save(kind, _bake_image(f"{finish_name}_{kind}", res, cs, "EMIT", tree, tex_img))
 
     tree.links.new(surf_from, fn.out.inputs["Surface"])
-    save("normal", _bake_image(f"{finish_name}_normal", res, "Non-Color", "NORMAL", tree, tex_img))
+    save(
+        "normal",
+        _bake_image(f"{finish_name}_normal", res, "Non-Color", "NORMAL", tree, tex_img),
+    )
 
     bpy.data.objects.remove(plane)
     hfile.write_text(h)

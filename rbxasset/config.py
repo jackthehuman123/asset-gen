@@ -32,7 +32,7 @@ def _read_dotenv(path: Path) -> Dict[str, str]:
         if not line or line.startswith("#") or "=" not in line:
             continue
         if line.startswith("export "):
-            line = line[len("export "):].lstrip()
+            line = line[len("export ") :].lstrip()
         key, _, value = line.partition("=")
         value = value.strip()
         if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
@@ -54,10 +54,14 @@ def load_config(root: Path, require_key: bool = False) -> Config:
 
     creator_type = str(data.get("creator_type", "user"))
     if creator_type not in ("user", "group"):
-        raise ConfigError(f"creator_type must be 'user' or 'group', got {creator_type!r}")
+        raise ConfigError(
+            f"creator_type must be 'user' or 'group', got {creator_type!r}"
+        )
     creator_id = str(data.get("creator_id", ""))
 
-    api_key = os.environ.get(KEY_VAR) or _read_dotenv(root / ENV_FILE).get(KEY_VAR) or None
+    api_key = (
+        os.environ.get(KEY_VAR) or _read_dotenv(root / ENV_FILE).get(KEY_VAR) or None
+    )
 
     if require_key:
         if not api_key:
@@ -66,7 +70,9 @@ def load_config(root: Path, require_key: bool = False) -> Config:
                 "Create a key in the Roblox Creator Dashboard."
             )
         if not creator_id:
-            raise ConfigError(f"creator_id must be set in {CONFIG_FILE} when an API key is required")
+            raise ConfigError(
+                f"creator_id must be set in {CONFIG_FILE} when an API key is required"
+            )
 
     return Config(
         root=root,

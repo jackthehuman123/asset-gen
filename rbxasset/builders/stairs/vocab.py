@@ -11,7 +11,10 @@ def validate(p, budgets):
     rules.num(p, "width", 1.0, 12.0)
     rules.num(p, "tread_thickness", 0.05, 0.4)
     if p["tread_thickness"] > p["rise"]:
-        raise ValueError("tread_thickness %r cannot exceed rise %r" % (p["tread_thickness"], p["rise"]))
+        raise ValueError(
+            "tread_thickness %r cannot exceed rise %r"
+            % (p["tread_thickness"], p["rise"])
+        )
 
 
 VOCAB = Vocab(
@@ -22,8 +25,12 @@ VOCAB = Vocab(
         "width": _N(3.0),
         "tread_thickness": _N(0.12),
         "risers": ParamDef("bool", default=True),
-        "stringers": ParamDef("bool", default=True, doc="solid side walls under the flight"),
-        "handrail": ParamDef("bool", default=False, doc="posts and sloped rails on both sides"),
+        "stringers": ParamDef(
+            "bool", default=True, doc="solid side walls under the flight"
+        ),
+        "handrail": ParamDef(
+            "bool", default=False, doc="posts and sloped rails on both sides"
+        ),
     },
     part_tags=("treads", "risers", "stringers", "rail"),
     tiled_tags=frozenset(),

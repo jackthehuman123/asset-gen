@@ -16,9 +16,9 @@ def png_rgba_rows(path):
     assert data[:8] == b"\x89PNG\r\n\x1a\n"
     pos, idat, w, h, ctype, depth = 8, b"", 0, 0, 0, 0
     while pos < len(data):
-        ln, = struct.unpack(">I", data[pos:pos + 4])
-        typ = data[pos + 4:pos + 8]
-        body = data[pos + 8:pos + 8 + ln]
+        (ln,) = struct.unpack(">I", data[pos : pos + 4])
+        typ = data[pos + 4 : pos + 8]
+        body = data[pos + 8 : pos + 8 + ln]
         if typ == b"IHDR":
             w, h, depth, ctype = struct.unpack(">IIBB", body[:10])
         elif typ == b"IDAT":
@@ -30,7 +30,7 @@ def png_rgba_rows(path):
     rows, prev = [], bytearray(stride)
     for r in range(h):
         off = r * (stride + 1)
-        f, line = raw[off], bytearray(raw[off + 1:off + 1 + stride])
+        f, line = raw[off], bytearray(raw[off + 1 : off + 1 + stride])
         for i in range(stride):
             a = line[i - bpp] if i >= bpp else 0
             b = prev[i]
@@ -53,7 +53,7 @@ def png_rgba_rows(path):
 
 def png_rgba_pixel(path, x, y):
     _, _, rows = png_rgba_rows(path)
-    return tuple(rows[y][x * 4:x * 4 + 4])
+    return tuple(rows[y][x * 4 : x * 4 + 4])
 
 
 @pytest.mark.blender
@@ -61,13 +61,19 @@ def test_cabinet_build_end_to_end(tmp_path):
     root = tmp_path / "proj"
     (root / "games" / "farm").mkdir(parents=True)
     # low budgets keep the test fast; preview_* keys are optional render knobs
-    game = (FIX / "game_STYLE.md").read_text().replace(
-        '"camera": "first_person",',
-        '"camera": "first_person", "budgets": {"texture_big": 256, "texture_small": 128,'
-        ' "preview_samples": 8, "preview_res": [400, 300]},')
+    game = (
+        (FIX / "game_STYLE.md")
+        .read_text()
+        .replace(
+            '"camera": "first_person",',
+            '"camera": "first_person", "budgets": {"texture_big": 256, "texture_small": 128,'
+            ' "preview_samples": 8, "preview_res": [400, 300]},',
+        )
+    )
     (root / "games" / "farm" / "STYLE.md").write_text(game)
     (root / "rbxasset.config.json").write_text(
-        (Path(__file__).parent.parent / "rbxasset.config.json").read_text())
+        (Path(__file__).parent.parent / "rbxasset.config.json").read_text()
+    )
     adir = root / "games" / "farm" / "cabinet"
     adir.mkdir(parents=True)
     shutil.copy(FIX / "cabinet_spec.json", adir / "spec.json")
@@ -96,7 +102,9 @@ def test_cabinet_build_end_to_end(tmp_path):
 
     # opaque decal pixels must be the spec colour (#3A1A14) in sRGB, shaded 0.69-1.06x
     w, h, rows = png_rgba_rows(d["image"])
-    opaque = [tuple(r[i:i + 3]) for r in rows for i in range(0, w * 4, 4) if r[i + 3] == 255]
+    opaque = [
+        tuple(r[i : i + 3]) for r in rows for i in range(0, w * 4, 4) if r[i + 3] == 255
+    ]
     assert opaque, "decal has no fully opaque pixels"
     base = (0x3A, 0x1A, 0x14)
     for px in opaque:

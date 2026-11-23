@@ -5,12 +5,21 @@ from rbxasset.builders.vocab import Vocab
 
 
 def vocab(makes, not_for=("nothing",)):
-    return Vocab(params={}, part_tags=(), tiled_tags=frozenset(), big_tags=frozenset(),
-                 no_collide_tags=frozenset(), makes=tuple(makes), not_for=tuple(not_for))
+    return Vocab(
+        params={},
+        part_tags=(),
+        tiled_tags=frozenset(),
+        big_tags=frozenset(),
+        no_collide_tags=frozenset(),
+        makes=tuple(makes),
+        not_for=tuple(not_for),
+    )
 
 
-V = {"cabinet": vocab(["cabinet", "sideboard"], ["cup cabinet", "locker"]),
-     "house": vocab(["house", "cottage"], ["tower"])}
+V = {
+    "cabinet": vocab(["cabinet", "sideboard"], ["cup cabinet", "locker"]),
+    "house": vocab(["house", "cottage"], ["tower"]),
+}
 
 
 def top(request, vocabs=V):
@@ -81,8 +90,10 @@ def test_every_makes_phrase_matches_only_its_own_builder_at_build():
         for phrase in v.makes:
             ms = match.match_all(phrase, r)
             kind, best = match.verdict(ms)
-            assert (best.builder if best else None, kind) == (name, "build"), \
-                "%r should build with %s, got %s" % (phrase, name, [(m.builder, m.confidence) for m in ms[:2]])
+            assert (best.builder if best else None, kind) == (name, "build"), (
+                "%r should build with %s, got %s"
+                % (phrase, name, [(m.builder, m.confidence) for m in ms[:2]])
+            )
 
 
 def test_longer_phrase_shadows_shorter_phrase_of_another_builder():

@@ -1,4 +1,5 @@
 """Preview renders (not exported). Runs inside Blender."""
+
 import math
 import os
 from typing import List, Tuple
@@ -49,7 +50,9 @@ def _setup_lighting(preset, bounds):
     cx = (lo[0] + hi[0]) / 2
     if preset == "overcast_exterior":
         bpy.ops.mesh.primitive_plane_add(size=200, location=(0, 0, lo[2]))
-        bpy.context.active_object.data.materials.append(_plain("Ground", "#4A4636", 0.9))
+        bpy.context.active_object.data.materials.append(
+            _plain("Ground", "#4A4636", 0.9)
+        )
         _world((0.62, 0.66, 0.72, 1), 0.9)
         bpy.ops.object.light_add(type="SUN", location=(0, 0, 50))
         sun = bpy.context.active_object
@@ -71,7 +74,9 @@ def _setup_lighting(preset, bounds):
     if preset == "abandoned_interior":
         key.data.energy = 500
         key.data.color = (0.75, 0.82, 1.0)
-        bpy.ops.object.light_add(type="POINT", location=(cx + 3, lo[1] + 2.5, lo[2] + 2.5))
+        bpy.ops.object.light_add(
+            type="POINT", location=(cx + 3, lo[1] + 2.5, lo[2] + 2.5)
+        )
         fill = bpy.context.active_object
         fill.data.energy = 25
         fill.data.color = (1.0, 0.75, 0.5)
@@ -79,16 +84,23 @@ def _setup_lighting(preset, bounds):
         key.data.energy = 900
 
 
-def render_shots(shots, preset: str, out_dir: str, samples: int,
-                 res: Tuple[int, int], bounds) -> List[str]:
+def render_shots(
+    shots, preset: str, out_dir: str, samples: int, res: Tuple[int, int], bounds
+) -> List[str]:
     if preset not in PRESETS:
-        raise ValueError("unknown preview preset %r; available: %s" % (preset, ", ".join(PRESETS)))
+        raise ValueError(
+            "unknown preview preset %r; available: %s" % (preset, ", ".join(PRESETS))
+        )
     os.makedirs(out_dir, exist_ok=True)
     lo, hi = bounds["min"], bounds["max"]
     scene = bpy.context.scene
     _setup_lighting(preset, bounds)
     # character marker (2 wide, 5.5 tall, 1 deep) for scale, beside the asset
-    _box((2, 1, 5.5), (hi[0] + 2.0, (lo[1] + hi[1]) / 2, lo[2] + 2.75), _plain("Marker", "#808080", 0.8))
+    _box(
+        (2, 1, 5.5),
+        (hi[0] + 2.0, (lo[1] + hi[1]) / 2, lo[2] + 2.75),
+        _plain("Marker", "#808080", 0.8),
+    )
 
     cam = bpy.data.objects.new("Cam", bpy.data.cameras.new("Cam"))
     scene.collection.objects.link(cam)

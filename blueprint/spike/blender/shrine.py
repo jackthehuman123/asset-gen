@@ -6,6 +6,7 @@ THROWAWAY SPIKE: spec-driven abandoned village shrine (torii + path + hokora on 
 --quick: geometry only (join for tri counts, workbench renders, no bake/export).
 Coordinates: X across the lane, Y depth (torii at -Y, hokora at +Y), Z up. 1 unit = 1 stud.
 """
+
 import json
 import math
 import os
@@ -19,7 +20,7 @@ from mathutils import Euler, Matrix, Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lib_pipeline as lp  # noqa: E402
 
-argv = sys.argv[sys.argv.index("--") + 1:]
+argv = sys.argv[sys.argv.index("--") + 1 :]
 SPEC_PATH, OUT = argv[0], argv[1]
 QUICK = "--quick" in argv
 os.makedirs(OUT, exist_ok=True)
@@ -54,8 +55,14 @@ def wbox(tag, center, size, rot=None, bevel=0.0):
 
 
 def cyl(tag, center, r1, r2, depth, rot=(0, 0, 0), verts=12):
-    bpy.ops.mesh.primitive_cone_add(vertices=verts, radius1=r1, radius2=r2, depth=depth,
-                                    location=center, rotation=rot)
+    bpy.ops.mesh.primitive_cone_add(
+        vertices=verts,
+        radius1=r1,
+        radius2=r2,
+        depth=depth,
+        location=center,
+        rotation=rot,
+    )
     o = bpy.context.active_object
     PARTS[tag].append(o)
     return o
@@ -93,7 +100,11 @@ def loft(tag, rings):
 def rotate_about(objs, pivot, euler, move=(0, 0, 0)):
     bpy.context.view_layer.update()  # matrix_world must reflect scale/rotation set just before
     p = Vector(pivot)
-    M = Matrix.Translation(p + Vector(move)) @ Euler(euler).to_matrix().to_4x4() @ Matrix.Translation(-p)
+    M = (
+        Matrix.Translation(p + Vector(move))
+        @ Euler(euler).to_matrix().to_4x4()
+        @ Matrix.Translation(-p)
+    )
     for o in objs:
         o.matrix_world = M @ o.matrix_world
 
@@ -119,7 +130,7 @@ BW, BY0, BY1 = B["width"], B["y0"], B["y1"]
 FLOOR = PH + B["stilt"]
 TOP = FLOOR + B["wall_height"]
 PS = B["post_size"]
-VY0 = BY0 - S["veranda_depth"]   # veranda front edge
+VY0 = BY0 - S["veranda_depth"]  # veranda front edge
 YC = (BY0 + BY1) / 2
 HALF_D = (BY1 - BY0) / 2
 
@@ -142,19 +153,37 @@ for k in range(ncourse):
         cur = a0
         first = True
         while cur < a1 - 0.05:
-            ln = min(rng.uniform(0.9, 1.5) if not (first and k % 2) else rng.uniform(0.4, 0.7), a1 - cur)
+            ln = min(
+                rng.uniform(0.9, 1.5)
+                if not (first and k % 2)
+                else rng.uniform(0.4, 0.7),
+                a1 - cur,
+            )
             first = False
             mid = cur + ln / 2
             push = 0.0
-            tilt = (rng.uniform(-0.015, 0.015), rng.uniform(-0.015, 0.015), rng.uniform(-0.03, 0.03))
+            tilt = (
+                rng.uniform(-0.015, 0.015),
+                rng.uniform(-0.015, 0.015),
+                rng.uniform(-0.03, 0.03),
+            )
             # the top-front course, right of the steps: one stone has fallen out
-            if (fallen_slot is None and name == "front" and k == ncourse - 1 and mid > 1.8):
+            if (
+                fallen_slot is None
+                and name == "front"
+                and k == ncourse - 1
+                and mid > 1.8
+            ):
                 fallen_slot = (mid, ln)
                 cur += ln
                 continue
             if chance("displaced_stones"):
                 push = rng.uniform(0.06, 0.18)
-                tilt = (rng.uniform(-0.06, 0.06), rng.uniform(-0.06, 0.06), rng.uniform(-0.08, 0.08))
+                tilt = (
+                    rng.uniform(-0.06, 0.06),
+                    rng.uniform(-0.06, 0.06),
+                    rng.uniform(-0.08, 0.08),
+                )
             if ax == "x":
                 c = (mid, fixed + out * push, zc)
                 sz = (ln - 0.05, 0.7, CH - 0.03)
@@ -163,11 +192,23 @@ for k in range(ncourse):
                 sz = (0.7, ln - 0.05, CH - 0.03)
             wbox("plinth", c, sz, rot=tilt, bevel=0.07)
             cur += ln
-wbox("plinth", (0, (PY0 + PY1) / 2, (PH - 0.04) / 2), (PW - 0.6, PY1 - PY0 - 0.6, PH - 0.04))  # core fill
+wbox(
+    "plinth",
+    (0, (PY0 + PY1) / 2, (PH - 0.04) / 2),
+    (PW - 0.6, PY1 - PY0 - 0.6, PH - 0.04),
+)  # core fill
 if fallen_slot:
     fx, fl = fallen_slot
-    wbox("plinth", (fx + 0.3, PY0 - 0.75, 0.3), (fl - 0.05, 0.7, CH - 0.03), rot=(0.25, 0.1, 0.5), bevel=0.07)
-    wbox("plinth", (fx, PY0 + 0.6, PH - CH - 0.02), (fl - 0.1, 0.5, 0.05))  # darker gap floor
+    wbox(
+        "plinth",
+        (fx + 0.3, PY0 - 0.75, 0.3),
+        (fl - 0.05, 0.7, CH - 0.03),
+        rot=(0.25, 0.1, 0.5),
+        bevel=0.07,
+    )
+    wbox(
+        "plinth", (fx, PY0 + 0.6, PH - CH - 0.02), (fl - 0.1, 0.5, 0.05)
+    )  # darker gap floor
 
 # ------------------------------------------------------------------ steps up to the plinth + flagstone path
 ST = S["steps"]
@@ -178,11 +219,21 @@ for k in range(ST["count"]):
     if k == 0:  # bottom step cracked in two
         for sx, ww in ((-1, w * 0.55), (1, w * 0.45)):
             cx = -w / 2 + ww / 2 if sx < 0 else w / 2 - ww / 2
-            wbox("path", (cx + sx * 0.03, (y0 + PY0) / 2, top / 2 - (0.03 if sx > 0 else 0)),
-                 (ww - 0.06, PY0 - y0, top), rot=(0, sx * 0.02, rng.uniform(-0.03, 0.03)), bevel=0.06)
+            wbox(
+                "path",
+                (cx + sx * 0.03, (y0 + PY0) / 2, top / 2 - (0.03 if sx > 0 else 0)),
+                (ww - 0.06, PY0 - y0, top),
+                rot=(0, sx * 0.02, rng.uniform(-0.03, 0.03)),
+                bevel=0.06,
+            )
     else:
-        wbox("path", (rng.uniform(-0.04, 0.04), (y0 + PY0) / 2, top / 2), (w, PY0 - y0, top),
-             rot=(0, 0, rng.uniform(-0.02, 0.02)), bevel=0.06)
+        wbox(
+            "path",
+            (rng.uniform(-0.04, 0.04), (y0 + PY0) / 2, top / 2),
+            (w, PY0 - y0, top),
+            rot=(0, 0, rng.uniform(-0.02, 0.02)),
+            bevel=0.06,
+        )
 STEP_Y0 = PY0 - 0.4 * ST["count"]
 
 flagstones = []
@@ -194,8 +245,11 @@ while y > S["path_start_y"]:
         sz = (rng.uniform(0.95, 1.2), rng.uniform(0.85, 1.05), 0.26)
         sunk = chance("sunk_flagstones")
         z = 0.06 if not sunk else -0.02
-        rot = (rng.uniform(-0.04, 0.04) * (3 if sunk else 1), rng.uniform(-0.04, 0.04) * (3 if sunk else 1),
-               rng.uniform(-0.25, 0.25))
+        rot = (
+            rng.uniform(-0.04, 0.04) * (3 if sunk else 1),
+            rng.uniform(-0.04, 0.04) * (3 if sunk else 1),
+            rng.uniform(-0.25, 0.25),
+        )
         c = (x0 + rng.uniform(-0.12, 0.12), y + rng.uniform(-0.08, 0.08), z)
         wbox("path", c, sz, rot=rot, bevel=0.07)
         flagstones.append(c)
@@ -205,10 +259,20 @@ while y > S["path_start_y"]:
 SX = BW / 2
 for x in (-SX + 0.15, 0, SX - 0.15):
     for yy in (VY0 + 0.15, BY0, YC, BY1 - 0.1):
-        wbox("frame", (x, yy, (PH + FLOOR - 0.15) / 2), (0.3, 0.3, FLOOR - 0.15 - PH), bevel=0.02)
+        wbox(
+            "frame",
+            (x, yy, (PH + FLOOR - 0.15) / 2),
+            (0.3, 0.3, FLOOR - 0.15 - PH),
+            bevel=0.02,
+        )
 for yy in (VY0 + 0.15, BY0, BY1 - 0.1):
     wbox("frame", (0, yy, FLOOR - 0.3), (BW + 0.2, 0.25, 0.25))  # sleepers
-wbox("frame", (0, (VY0 + BY1) / 2 + 0.05, FLOOR - 0.08), (BW + 0.5, BY1 - VY0 + 0.1, 0.16), bevel=0.02)  # deck
+wbox(
+    "frame",
+    (0, (VY0 + BY1) / 2 + 0.05, FLOOR - 0.08),
+    (BW + 0.5, BY1 - VY0 + 0.1, 0.16),
+    bevel=0.02,
+)  # deck
 
 for x in (-SX, SX):  # corner + door posts
     for yy in (BY0, BY1):
@@ -221,7 +285,9 @@ for yy in (BY0, BY1):  # top plates + head beam
     wbox("frame", (0, yy, TOP - 0.15), (BW + 0.5, 0.32, 0.3), bevel=0.02)
 for x in (-SX, SX):
     wbox("frame", (x, YC, TOP - 0.15), (0.32, BY1 - BY0 + 0.4, 0.3), bevel=0.02)
-wbox("frame", (0, BY0 - 0.04, DOOR_TOP + 0.1), (BW + 0.2, 0.3, 0.22), bevel=0.02)  # nageshi
+wbox(
+    "frame", (0, BY0 - 0.04, DOOR_TOP + 0.1), (BW + 0.2, 0.3, 0.22), bevel=0.02
+)  # nageshi
 wbox("frame", (0, BY0 - 0.04, FLOOR + 0.06), (BW, 0.3, 0.12))  # threshold
 
 
@@ -233,7 +299,9 @@ def boards(fixed, a0, a1, z0, z1, along):
         if not chance("missing_boards"):
             m = a + bw / 2
             c = (m, fixed, (z0 + z1) / 2) if along == "x" else (fixed, m, (z0 + z1) / 2)
-            sz = (bw - 0.02, 0.1, z1 - z0) if along == "x" else (0.1, bw - 0.02, z1 - z0)
+            sz = (
+                (bw - 0.02, 0.1, z1 - z0) if along == "x" else (0.1, bw - 0.02, z1 - z0)
+            )
             wbox("walls", c, sz, rot=(0, 0, rng.uniform(-0.01, 0.01)))
         a += bw
 
@@ -248,6 +316,7 @@ boards(BY0, -DOOR_X, DOOR_X, DOOR_TOP + 0.2, TOP - 0.3, "x")
 
 # gable triangles under the roof are built after the roof functions (below)
 
+
 # lattice doors
 def leaf(x0, x1, z0, z1, yy):
     objs = []
@@ -256,7 +325,9 @@ def leaf(x0, x1, z0, z1, yy):
     objs.append(wbox("doors", ((x0 + x1) / 2, yy, z1 - fr / 2), (x1 - x0, 0.12, fr)))
     objs.append(wbox("doors", (x0 + fr / 2, yy, (z0 + z1) / 2), (fr, 0.12, z1 - z0)))
     objs.append(wbox("doors", (x1 - fr / 2, yy, (z0 + z1) / 2), (fr, 0.12, z1 - z0)))
-    objs.append(wbox("doors", ((x0 + x1) / 2, yy, z0 + 0.45), (x1 - x0, 0.1, 0.7)))  # kick panel
+    objs.append(
+        wbox("doors", ((x0 + x1) / 2, yy, z0 + 0.45), (x1 - x0, 0.1, 0.7))
+    )  # kick panel
     n = 5
     for i in range(1, n):
         x = x0 + i * (x1 - x0) / n
@@ -264,14 +335,26 @@ def leaf(x0, x1, z0, z1, yy):
             if rng.random() < 0.5:
                 continue
             cut = rng.uniform(0.3, 0.6)
-            objs.append(wbox("doors", (x, yy, z0 + 0.8 + (z1 - z0 - 0.8) * cut / 2),
-                             (0.06, 0.07, (z1 - z0 - 0.8) * cut), rot=(0, rng.uniform(-0.15, 0.15), 0)))
+            objs.append(
+                wbox(
+                    "doors",
+                    (x, yy, z0 + 0.8 + (z1 - z0 - 0.8) * cut / 2),
+                    (0.06, 0.07, (z1 - z0 - 0.8) * cut),
+                    rot=(0, rng.uniform(-0.15, 0.15), 0),
+                )
+            )
             continue
-        objs.append(wbox("doors", (x, yy, (z0 + 0.8 + z1) / 2), (0.06, 0.07, z1 - z0 - 0.8)))
+        objs.append(
+            wbox("doors", (x, yy, (z0 + 0.8 + z1) / 2), (0.06, 0.07, z1 - z0 - 0.8))
+        )
     zz = z0 + 0.8
     while zz < z1 - 0.15:
         if not chance("broken_lattice"):
-            objs.append(wbox("doors", ((x0 + x1) / 2, yy - 0.02, zz), (x1 - x0 - 0.1, 0.05, 0.05)))
+            objs.append(
+                wbox(
+                    "doors", ((x0 + x1) / 2, yy - 0.02, zz), (x1 - x0 - 0.1, 0.05, 0.05)
+                )
+            )
         zz += 0.3
     return objs
 
@@ -280,7 +363,9 @@ leaf(-DOOR_X + 0.14, 0.0, FLOOR + 0.12, DOOR_TOP, BY0 - 0.02)
 right = leaf(0.0, DOOR_X - 0.14, FLOOR + 0.12, DOOR_TOP, BY0 - 0.02)
 if DMG.get("fallen_door"):
     # off its track: slid right, base kicked out, leaning back across the doorway
-    rotate_about(right, (DOOR_X - 0.14, BY0, FLOOR), (0.16, 0.0, -0.12), move=(0.45, -0.38, 0.0))
+    rotate_about(
+        right, (DOOR_X - 0.14, BY0, FLOOR), (0.16, 0.0, -0.12), move=(0.45, -0.38, 0.0)
+    )
 
 # veranda railing
 RAIL_Y = VY0 + 0.08
@@ -289,8 +374,12 @@ for x in (-SX - 0.05, -1.55, -0.85, 0.85, 1.55, SX + 0.05):
         continue
     wbox("frame", (x, RAIL_Y, FLOOR + 0.4), (0.12, 0.12, 0.8))
 wbox("frame", (-(SX + 0.85) / 2, RAIL_Y, FLOOR + 0.78), (SX - 0.85 + 0.2, 0.12, 0.1))
-wbox("frame", ((SX + 0.85) / 2 + 0.1, RAIL_Y - 0.05, FLOOR + 0.62), (SX - 0.85 + 0.2, 0.12, 0.1),
-     rot=(0, 0.22, 0.05))  # broken rail, one end dropped
+wbox(
+    "frame",
+    ((SX + 0.85) / 2 + 0.1, RAIL_Y - 0.05, FLOOR + 0.62),
+    (SX - 0.85 + 0.2, 0.12, 0.1),
+    rot=(0, 0.22, 0.05),
+)  # broken rail, one end dropped
 for x in (-SX - 0.05, SX + 0.05):
     wbox("frame", (x, (RAIL_Y + BY0) / 2, FLOOR + 0.78), (0.12, BY0 - RAIL_Y, 0.1))
 
@@ -301,25 +390,45 @@ rise = (FLOOR - PH) / (N_ST + 1)
 run = (SY1 - SY0) / N_ST
 for k in range(N_ST):
     z = PH + rise * (k + 1)
-    wbox("frame", (0, SY0 + run * k + run / 2, z - 0.05), (1.3, run + 0.08, 0.1), bevel=0.01)
+    wbox(
+        "frame",
+        (0, SY0 + run * k + run / 2, z - 0.05),
+        (1.3, run + 0.08, 0.1),
+        bevel=0.01,
+    )
 slope = math.atan2(FLOOR - PH, SY1 - SY0)
 L_str = math.hypot(FLOOR - PH, SY1 - SY0)
 for x in (-0.7, 0.7):
-    wbox("frame", (x, (SY0 + SY1) / 2, (PH + FLOOR) / 2), (0.1, L_str + 0.1, 0.3), rot=(slope, 0, 0))
+    wbox(
+        "frame",
+        (x, (SY0 + SY1) / 2, (PH + FLOOR) / 2),
+        (0.1, L_str + 0.1, 0.3),
+        rot=(slope, 0, 0),
+    )
 
 # offering box (saisen-bako)
 ob = []
 OBY = PY0 + 0.38
 ob.append(wbox("offering_box", (0, OBY, PH + 0.32), (1.2, 0.55, 0.5), bevel=0.02))
 for i in range(5):
-    ob.append(wbox("offering_box", (0, OBY - 0.2 + i * 0.1, PH + 0.62), (1.24, 0.06, 0.1), rot=(0.5, 0, 0)))
+    ob.append(
+        wbox(
+            "offering_box",
+            (0, OBY - 0.2 + i * 0.1, PH + 0.62),
+            (1.24, 0.06, 0.1),
+            rot=(0.5, 0, 0),
+        )
+    )
 for sx in (-1, 1):
     ob.append(wbox("offering_box", (sx * 0.56, OBY, PH + 0.06), (0.1, 0.6, 0.12)))
 rotate_about(ob, (0, OBY, PH), (0, 0.03, 0.07))
 
 # ------------------------------------------------------------------ roof
 RF = S["roof"]
-s0, s1 = math.tan(math.radians(RF["pitch_top_deg"])), math.tan(math.radians(RF["pitch_eave_deg"]))
+s0, s1 = (
+    math.tan(math.radians(RF["pitch_top_deg"])),
+    math.tan(math.radians(RF["pitch_eave_deg"])),
+)
 LB, LF = HALF_D + RF["eave_back"], HALF_D + RF["eave_front"]
 CC = (s0 - s1) / (2 * LB)
 T_ = RF["thickness"]
@@ -367,7 +476,9 @@ def side_profile(L):
     return pts
 
 
-prof = [(-h, o) for h, o in reversed(side_profile(LF))] + [(h, o) for h, o in side_profile(LB)]
+prof = [(-h, o) for h, o in reversed(side_profile(LF))] + [
+    (h, o) for h, o in side_profile(LB)
+]
 XS = [-HX + i * LX / 16 for i in range(17)]
 verts, faces = [], []
 nq = len(prof)
@@ -380,19 +491,21 @@ stride = 2 * nq
 for i in range(len(XS) - 1):
     a, b = i * stride, (i + 1) * stride
     for j in range(nq - 1):
-        faces.append((a + j, b + j, b + j + 1, a + j + 1))                       # top
-        faces.append((a + nq + j, a + nq + j + 1, b + nq + j + 1, b + nq + j))   # bottom
+        faces.append((a + j, b + j, b + j + 1, a + j + 1))  # top
+        faces.append((a + nq + j, a + nq + j + 1, b + nq + j + 1, b + nq + j))  # bottom
     for j in (0, nq - 1):
-        faces.append((a + j, a + nq + j, b + nq + j, b + j))                     # eave faces
+        faces.append((a + j, a + nq + j, b + nq + j, b + j))  # eave faces
 for i in (0, len(XS) - 1):
     a = i * stride
     for j in range(nq - 1):
-        faces.append((a + j, a + j + 1, a + nq + j + 1, a + nq + j))             # gable edges
+        faces.append((a + j, a + j + 1, a + nq + j + 1, a + nq + j))  # gable edges
 mesh_obj("roof", verts, faces)
 
 
 def strip_x(tag, q0, q1, o0, o1):
-    return loft(tag, [[RP(x, q0, o0), RP(x, q1, o0), RP(x, q1, o1), RP(x, q0, o1)] for x in XS])
+    return loft(
+        tag, [[RP(x, q0, o0), RP(x, q1, o0), RP(x, q1, o1), RP(x, q0, o1)] for x in XS]
+    )
 
 
 # layered eave edges (koshi) + rafter tails
@@ -409,8 +522,18 @@ for sgn, L in ((-1, LF), (1, LB)):
 QS = [-LF + i * (LF + LB) / 24 for i in range(25)]
 for gx in (-1, 1):
     x = gx * (HX - 0.06)
-    loft("roof_trim", [[RP(x - 0.07, q, -0.3), RP(x + 0.07, q, -0.3), RP(x + 0.07, q, T_ + 0.12),
-                        RP(x - 0.07, q, T_ + 0.12)] for q in QS])
+    loft(
+        "roof_trim",
+        [
+            [
+                RP(x - 0.07, q, -0.3),
+                RP(x + 0.07, q, -0.3),
+                RP(x + 0.07, q, T_ + 0.12),
+                RP(x - 0.07, q, T_ + 0.12),
+            ]
+            for q in QS
+        ],
+    )
 
 # gable infill triangles (boards behind the barge)
 for gx in (-1, 1):
@@ -420,7 +543,9 @@ for gx in (-1, 1):
     pts = [Vector((x, YC + HALF_D, TOP - 0.3)), Vector((x, YC - HALF_D, TOP - 0.3))]
     pts += [RP(x, q, -0.02) for q in qs]
     n = len(pts)
-    vv = [p + Vector((-0.06, 0, 0)) for p in pts] + [p + Vector((0.06, 0, 0)) for p in pts]
+    vv = [p + Vector((-0.06, 0, 0)) for p in pts] + [
+        p + Vector((0.06, 0, 0)) for p in pts
+    ]
     ff = [tuple(range(n)), tuple(range(2 * n - 1, n - 1, -1))]
     ff += [(i, (i + 1) % n, n + (i + 1) % n, n + i) for i in range(n)]
     mesh_obj("walls", vv, ff)
@@ -430,8 +555,14 @@ RIDGE_TOP = []
 ridge_rings = []
 for x in XS:
     z = ZR - sag_at(x, 0) + T_
-    ridge_rings.append([Vector((x, YC - 0.45, z - 0.75)), Vector((x, YC + 0.45, z - 0.75)),
-                        Vector((x, YC + 0.32, z + 0.28)), Vector((x, YC - 0.32, z + 0.28))])
+    ridge_rings.append(
+        [
+            Vector((x, YC - 0.45, z - 0.75)),
+            Vector((x, YC + 0.45, z - 0.75)),
+            Vector((x, YC + 0.32, z + 0.28)),
+            Vector((x, YC - 0.32, z + 0.28)),
+        ]
+    )
 loft("ridge", ridge_rings)
 
 
@@ -446,11 +577,26 @@ for i in range(nk):
     x = -HX + 1.0 + i * (LX - 2.0) / (nk - 1)
     if chance("missing_katsuogi"):
         if not fallen_k:  # one lies on the plinth
-            cyl("roof_trim", (PW / 2 - 1.0, PY1 - 0.7, PH + 0.2), 0.2, 0.17, 1.5, rot=(math.pi / 2, 0, 1.1), verts=10)
+            cyl(
+                "roof_trim",
+                (PW / 2 - 1.0, PY1 - 0.7, PH + 0.2),
+                0.2,
+                0.17,
+                1.5,
+                rot=(math.pi / 2, 0, 1.1),
+                verts=10,
+            )
             fallen_k = True
         continue
-    cyl("roof_trim", (x, YC, ridge_z(x) + 0.18), 0.2, 0.2, 1.5, rot=(math.pi / 2, 0, rng.uniform(-0.05, 0.05)),
-        verts=10)
+    cyl(
+        "roof_trim",
+        (x, YC, ridge_z(x) + 0.18),
+        0.2,
+        0.2,
+        1.5,
+        rot=(math.pi / 2, 0, rng.uniform(-0.05, 0.05)),
+        verts=10,
+    )
 
 # chigi: crossed boards at both gable ends
 RISE = RF["chigi_rise"]
@@ -466,10 +612,21 @@ for gx in (-1, 1):
             Ltot = (R - A).length + 0.25
         c = A + d * (Ltot / 2)
         rot = Vector((0, 1, 0)).rotation_difference(d).to_euler()
-        o = wbox("roof_trim", c + Vector((sgn * 0.08, 0, 0)), (0.14, Ltot, 0.42), rot=rot, bevel=0.02)
+        o = wbox(
+            "roof_trim",
+            c + Vector((sgn * 0.08, 0, 0)),
+            (0.14, Ltot, 0.42),
+            rot=rot,
+            bevel=0.02,
+        )
         if snapped:  # the broken-off tip lies on the back slope
             tip = RP(x - 0.9, 1.3, T_ + 0.15)
-            wbox("roof_trim", tip, (0.14, 1.1, 0.4), rot=(-math.atan(dslope(1.3)), 0.25, 0.6))
+            wbox(
+                "roof_trim",
+                tip,
+                (0.14, 1.1, 0.4),
+                rot=(-math.atan(dslope(1.3)), 0.25, 0.6),
+            )
 
 # ------------------------------------------------------------------ torii
 TR = S["torii"]
@@ -482,11 +639,21 @@ for sx in (-1, 1):
     cyl("torii", (x, TY, (0.4 + SHZ) / 2), PR, PR * 0.86, SHZ - 0.4, verts=20)
     cyl("torii", (x, TY, 0.62), PR + 0.05, PR + 0.05, 0.22, verts=20)  # base band
 NZ = TR["nuki_z"]
-wbox("torii", (-0.2, TY, NZ), (SPAN + 1.2 - 0.4, 0.34, 0.55), bevel=0.02)  # right end snapped short
+wbox(
+    "torii", (-0.2, TY, NZ), (SPAN + 1.2 - 0.4, 0.34, 0.55), bevel=0.02
+)  # right end snapped short
 for sx in (-1, 1):
     wbox("torii", (sx * (SPAN / 2 + PR + 0.08), TY, NZ), (0.14, 0.42, 0.42))  # wedges
-wbox("torii", (0, TY, (NZ + 0.275 + SHZ) / 2), (0.42, 0.3, SHZ - NZ - 0.275))  # gakuzuka
-wbox("torii", (0.05, TY - 0.2, (NZ + SHZ) / 2 + 0.15), (0.8, 0.08, 1.05), rot=(0.08, 0.09, 0), bevel=0.02)  # blank plaque
+wbox(
+    "torii", (0, TY, (NZ + 0.275 + SHZ) / 2), (0.42, 0.3, SHZ - NZ - 0.275)
+)  # gakuzuka
+wbox(
+    "torii",
+    (0.05, TY - 0.2, (NZ + SHZ) / 2 + 0.15),
+    (0.8, 0.08, 1.05),
+    rot=(0.08, 0.09, 0),
+    bevel=0.02,
+)  # blank plaque
 
 
 def beam_rings(L, z0, h, w_bot, w_top, up):
@@ -494,14 +661,26 @@ def beam_rings(L, z0, h, w_bot, w_top, up):
     for i in range(25):
         x = -L / 2 + i * L / 24
         zz = z0 + up * abs(2 * x / L) ** 2.5
-        rings.append([Vector((x, TY - w_bot, zz)), Vector((x, TY + w_bot, zz)),
-                      Vector((x, TY + w_top, zz + h)), Vector((x, TY - w_top, zz + h))])
+        rings.append(
+            [
+                Vector((x, TY - w_bot, zz)),
+                Vector((x, TY + w_bot, zz)),
+                Vector((x, TY + w_top, zz + h)),
+                Vector((x, TY - w_top, zz + h)),
+            ]
+        )
     return rings
 
 
-top_beams = [loft("torii", beam_rings(KL - 0.8, SHZ, 0.42, 0.3, 0.3, UP * 0.6)),
-             loft("torii", beam_rings(KL, KZ, 0.62, 0.42, 0.34, UP))]
-rotate_about(top_beams, (0, TY, KZ), (math.radians(0.8), 0, math.radians(DMG.get("torii_kasagi_twist_deg", 0))))
+top_beams = [
+    loft("torii", beam_rings(KL - 0.8, SHZ, 0.42, 0.3, 0.3, UP * 0.6)),
+    loft("torii", beam_rings(KL, KZ, 0.62, 0.42, 0.34, UP)),
+]
+rotate_about(
+    top_beams,
+    (0, TY, KZ),
+    (math.radians(0.8), 0, math.radians(DMG.get("torii_kasagi_twist_deg", 0))),
+)
 
 # shimenawa: two twisted strands, snapped on the right
 RZ, RSAG, RX = NZ - 0.45, 1.0, SPAN / 2 - PR + 0.05
@@ -545,7 +724,10 @@ def rope(path, rad):
 
 
 BREAK = 1.4 if DMG.get("snapped_rope") else RX
-main = [(-RX + i * (BREAK + RX) / 40, rope_z(-RX + i * (BREAK + RX) / 40)) for i in range(41)]
+main = [
+    (-RX + i * (BREAK + RX) / 40, rope_z(-RX + i * (BREAK + RX) / 40))
+    for i in range(41)
+]
 zb = rope_z(BREAK)
 main += [(BREAK + 0.05 * i, zb - 0.22 * i) for i in range(1, 8)]
 rope(rope_path(main), lambda t: 0.1 + 0.08 * math.sin(math.pi * min(t * 1.2, 1.0)))
@@ -562,8 +744,17 @@ for xs in (-2.2, -0.8, 0.6, 2.9):
     ztop = rope_z(xs) - 0.12
     n = rng.choice((2, 3, 4))
     for i in range(n):
-        wbox("shide", (xs + (0.09 if i % 2 else -0.09), TY - 0.02, ztop - 0.17 - 0.3 * i),
-             (0.26, 0.02, 0.3), rot=(rng.uniform(-0.1, 0.1), rng.uniform(-0.12, 0.12), rng.uniform(-0.3, 0.3)))
+        wbox(
+            "shide",
+            (xs + (0.09 if i % 2 else -0.09), TY - 0.02, ztop - 0.17 - 0.3 * i),
+            (0.26, 0.02, 0.3),
+            rot=(
+                rng.uniform(-0.1, 0.1),
+                rng.uniform(-0.12, 0.12),
+                rng.uniform(-0.3, 0.3),
+            ),
+        )
+
 
 # ------------------------------------------------------------------ stone lanterns + guardian blocks
 def lantern(x, y, capless):
@@ -573,16 +764,29 @@ def lantern(x, y, capless):
     cyl("statuary", (x, y, 1.71 * k), 0.45 * k, 0.6 * k, 0.22 * k, verts=6)
     for dx in (-0.25, 0.25):
         for dy in (-0.25, 0.25):
-            wbox("statuary", (x + dx * k, y + dy * k, 2.12 * k), (0.12 * k, 0.12 * k, 0.6 * k))
+            wbox(
+                "statuary",
+                (x + dx * k, y + dy * k, 2.12 * k),
+                (0.12 * k, 0.12 * k, 0.6 * k),
+            )
     wbox("statuary", (x, y, 1.86 * k), (0.62 * k, 0.62 * k, 0.06 * k))
     wbox("statuary", (x, y, 2.44 * k), (0.72 * k, 0.72 * k, 0.06 * k))
-    cap = [cyl("statuary", (x, y, 2.72 * k), 0.85 * k, 0.12 * k, 0.5 * k, verts=6),
-           cyl("statuary", (x, y, 2.5 * k), 0.85 * k, 0.85 * k, 0.1 * k, verts=6)]
-    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=0.15 * k, location=(x, y, 3.05 * k))
+    cap = [
+        cyl("statuary", (x, y, 2.72 * k), 0.85 * k, 0.12 * k, 0.5 * k, verts=6),
+        cyl("statuary", (x, y, 2.5 * k), 0.85 * k, 0.85 * k, 0.1 * k, verts=6),
+    ]
+    bpy.ops.mesh.primitive_ico_sphere_add(
+        subdivisions=1, radius=0.15 * k, location=(x, y, 3.05 * k)
+    )
     PARTS["statuary"].append(bpy.context.active_object)
     cap.append(bpy.context.active_object)
     if capless:  # cap fell into the grass beside the lantern
-        rotate_about(cap, (x, y, 2.7 * k), (1.25, 0.2, 0.4), move=(-0.75 * math.copysign(1, x), 0.8, -2.25 * k))
+        rotate_about(
+            cap,
+            (x, y, 2.7 * k),
+            (1.25, 0.2, 0.4),
+            move=(-0.75 * math.copysign(1, x), 0.8, -2.25 * k),
+        )
         moss((x, y, 2.48 * k), 0.3, 0.5)
     else:
         moss((x + 0.2, y - 0.1, 2.95 * k), 0.35, 0.4)
@@ -592,11 +796,17 @@ def lantern(x, y, capless):
 
 def guardian(x, y, toppled):
     wbox("statuary", (x, y, 0.4), (0.95, 1.15, 0.8), bevel=0.06)
-    body = [wbox("statuary", (x, y + 0.05, 1.2), (0.72, 0.95, 0.8), bevel=0.18),
-            wbox("statuary", (x, y - 0.3, 1.8), (0.55, 0.5, 0.5), bevel=0.12)]
+    body = [
+        wbox("statuary", (x, y + 0.05, 1.2), (0.72, 0.95, 0.8), bevel=0.18),
+        wbox("statuary", (x, y - 0.3, 1.8), (0.55, 0.5, 0.5), bevel=0.12),
+    ]
     if toppled:
-        rotate_about(body, (x, y, 1.2), (0.15, 1.45 * math.copysign(1, x), 0.3),
-                     move=(0.95 * math.copysign(1, x), 0.1, -0.85))
+        rotate_about(
+            body,
+            (x, y, 1.2),
+            (0.15, 1.45 * math.copysign(1, x), 0.3),
+            move=(0.95 * math.copysign(1, x), 0.1, -0.85),
+        )
         moss((x, y, 0.82), 0.45, 0.3)
     else:
         moss((x + 0.1, y + 0.15, 1.62), 0.35, 0.35)
@@ -623,14 +833,24 @@ for _ in range(int(nm * 0.45)):
 # ridge + chigi bases
 for _ in range(6):
     x = rng.uniform(-HX + 0.5, HX - 0.5)
-    moss((x, YC + rng.uniform(-0.3, 0.3), ridge_z(x) - 0.05), rng.uniform(0.25, 0.4), 0.35)
+    moss(
+        (x, YC + rng.uniform(-0.3, 0.3), ridge_z(x) - 0.05),
+        rng.uniform(0.25, 0.4),
+        0.35,
+    )
 # plinth: top edges + base
 for _ in range(int(nm * 0.16)):
     side = rng.random()
     if side < 0.5:
-        x, yy = rng.uniform(-PW / 2 + 0.3, PW / 2 - 0.3), rng.choice((PY0 + 0.25, PY1 - 0.25))
+        x, yy = (
+            rng.uniform(-PW / 2 + 0.3, PW / 2 - 0.3),
+            rng.choice((PY0 + 0.25, PY1 - 0.25)),
+        )
     else:
-        x, yy = rng.choice((-PW / 2 + 0.25, PW / 2 - 0.25)), rng.uniform(PY0 + 0.3, PY1 - 0.3)
+        x, yy = (
+            rng.choice((-PW / 2 + 0.25, PW / 2 - 0.25)),
+            rng.uniform(PY0 + 0.3, PY1 - 0.3),
+        )
     moss((x, yy, PH - 0.02), rng.uniform(0.25, 0.5), 0.35)
 for _ in range(int(nm * 0.1)):
     if rng.random() < 0.5:
@@ -642,22 +862,47 @@ for _ in range(int(nm * 0.1)):
 for k in range(ST["count"]):
     top = PH * (k + 1) / ST["count"]
     for _ in range(2):
-        moss((rng.choice((-1, 1)) * rng.uniform(0.6, 1.2), PY0 - 0.4 * (ST["count"] - k) + 0.15, top - 0.02),
-             rng.uniform(0.2, 0.35), 0.35)
+        moss(
+            (
+                rng.choice((-1, 1)) * rng.uniform(0.6, 1.2),
+                PY0 - 0.4 * (ST["count"] - k) + 0.15,
+                top - 0.02,
+            ),
+            rng.uniform(0.2, 0.35),
+            0.35,
+        )
 # path: between and around flagstones
 for c in rng.sample(flagstones, min(len(flagstones), int(nm * 0.1))):
-    moss((c[0] + rng.choice((-1, 1)) * 0.55, c[1] + rng.uniform(-0.4, 0.4), 0.0), rng.uniform(0.25, 0.45), 0.4)
+    moss(
+        (c[0] + rng.choice((-1, 1)) * 0.55, c[1] + rng.uniform(-0.4, 0.4), 0.0),
+        rng.uniform(0.25, 0.45),
+        0.4,
+    )
 # torii: kasagi top, base stones
 kas = []
 for x in (-3.9, -1.2, 2.4):
-    kas.append(moss((x, TY, KZ + 0.62 + UP * abs(2 * x / KL) ** 2.5 - 0.02), rng.uniform(0.16, 0.22), 0.3))
-rotate_about(kas, (0, TY, KZ), (math.radians(0.8), 0, math.radians(DMG.get("torii_kasagi_twist_deg", 0))))
+    kas.append(
+        moss(
+            (x, TY, KZ + 0.62 + UP * abs(2 * x / KL) ** 2.5 - 0.02),
+            rng.uniform(0.16, 0.22),
+            0.3,
+        )
+    )
+rotate_about(
+    kas,
+    (0, TY, KZ),
+    (math.radians(0.8), 0, math.radians(DMG.get("torii_kasagi_twist_deg", 0))),
+)
 for sx in (-1, 1):
     moss((sx * SPAN / 2 + 0.45, TY - 0.3, 0.42), 0.3, 0.4)
     moss((sx * SPAN / 2 - 0.4, TY + 0.4, 0.1), 0.4, 0.45)
 
-print(f"[shrine] built {sum(len(v) for v in PARTS.values())} pieces in {time.time() - T0:.0f}s")
-print(f"[shrine] ridge z={ZR + T_:.2f}, torii top ~{KZ + 0.62 + UP:.2f}, front eave z={RP(0, -LF, 0).z:.2f}")
+print(
+    f"[shrine] built {sum(len(v) for v in PARTS.values())} pieces in {time.time() - T0:.0f}s"
+)
+print(
+    f"[shrine] ridge z={ZR + T_:.2f}, torii top ~{KZ + 0.62 + UP:.2f}, front eave z={RP(0, -LF, 0).z:.2f}"
+)
 
 # ------------------------------------------------------------------ join, bake, export
 meshes = lp.join_parts(PARTS, spec, {"W": PW, "H": KZ}, "Shrine")
@@ -671,11 +916,15 @@ for me in meshes:
         mn = Vector(map(min, mn, w))
         mx = Vector(map(max, mx, w))
     print(f"[shrine]   {me['tag']}: {tuple(round(v, 1) for v in me['obj'].dimensions)}")
-print(f"[shrine] bounds (AABB of rotated joined meshes, loose) min={tuple(round(v, 2) for v in mn)} max={tuple(round(v, 2) for v in mx)}")
+print(
+    f"[shrine] bounds (AABB of rotated joined meshes, loose) min={tuple(round(v, 2) for v in mn)} max={tuple(round(v, 2) for v in mx)}"
+)
 
 BIG = {"plinth", "path", "roof", "torii", "frame", "walls", "moss", "statuary"}
 if not QUICK:
-    bake_s = lp.bake(meshes, os.path.join(OUT, "textures"), lambda tag: 1024 if tag in BIG else 512)
+    bake_s = lp.bake(
+        meshes, os.path.join(OUT, "textures"), lambda tag: 1024 if tag in BIG else 512
+    )
     print(f"[shrine] bake took {bake_s:.0f}s")
     lp.swap_to_baked(meshes)
     lp.export_fbx(meshes, os.path.join(OUT, "shrine.fbx"))
@@ -693,12 +942,16 @@ def plain(name, hexstr, rough=0.9):
 
 bpy.ops.mesh.primitive_plane_add(size=200, location=(0, 0, 0))
 bpy.context.active_object.data.materials.append(plain("Ground", "#4A4636"))
-bpy.ops.mesh.primitive_cube_add(size=1, location=(0, YC + 0.1, (FLOOR + TOP) / 2))  # dark interior
+bpy.ops.mesh.primitive_cube_add(
+    size=1, location=(0, YC + 0.1, (FLOOR + TOP) / 2)
+)  # dark interior
 inner = bpy.context.active_object
 inner.scale = (BW - 0.4, BY1 - BY0 - 0.4, TOP - FLOOR - 0.2)
 bpy.ops.object.transform_apply(scale=True)
 inner.data.materials.append(plain("Interior", "#0C0A09"))
-bpy.ops.mesh.primitive_cube_add(size=1, location=(6.8, -3.0, 2.75))  # 2x5.5x1 character marker
+bpy.ops.mesh.primitive_cube_add(
+    size=1, location=(6.8, -3.0, 2.75)
+)  # 2x5.5x1 character marker
 mk = bpy.context.active_object
 mk.scale = (2, 1, 5.5)
 bpy.ops.object.transform_apply(scale=True)
@@ -706,7 +959,12 @@ mk.data.materials.append(plain("Marker", "#808080", 0.6))
 
 world = bpy.data.worlds.new("World")
 world.use_nodes = True
-world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.62, 0.66, 0.72, 1)
+world.node_tree.nodes["Background"].inputs["Color"].default_value = (
+    0.62,
+    0.66,
+    0.72,
+    1,
+)
 world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.9
 scene.world = world
 bpy.ops.object.light_add(type="SUN", location=(0, 0, 50))
@@ -739,9 +997,24 @@ ht = KZ + 0.62 + UP
 dep = (YC + LB) - (TY - 0.8)
 d_wide = max(ht, dep) * 2.3
 shots = (
-    ("preview_wide", (ctr.x - 0.62 * d_wide, ctr.y - 0.7 * d_wide, ht * 1.05), (ctr.x + 1.0, ctr.y, ht * 0.4), 35),
-    ("preview_approach", (0.7, mn.y - 0.9 * dep, 5.0), (0, (PY0 + PY1) / 2, ht * 0.5), 24),
-    ("preview_hokora", (-SX - 4.5, VY0 - 4.8, FLOOR + 2.6), (0, YC - 0.3, (PH + ZR) / 2), 35),
+    (
+        "preview_wide",
+        (ctr.x - 0.62 * d_wide, ctr.y - 0.7 * d_wide, ht * 1.05),
+        (ctr.x + 1.0, ctr.y, ht * 0.4),
+        35,
+    ),
+    (
+        "preview_approach",
+        (0.7, mn.y - 0.9 * dep, 5.0),
+        (0, (PY0 + PY1) / 2, ht * 0.5),
+        24,
+    ),
+    (
+        "preview_hokora",
+        (-SX - 4.5, VY0 - 4.8, FLOOR + 2.6),
+        (0, YC - 0.3, (PH + ZR) / 2),
+        35,
+    ),
     ("preview_roof", (SX + 5.5, VY0 - 4.0, ZR + 4.5), (0, YC, ZR - 1.2), 35),
 )
 for name, loc, tgt, lens in shots:

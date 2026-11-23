@@ -1,4 +1,5 @@
 """Chair / stool / bench: seat, four legs, optional back and arms. Runs inside Blender."""
+
 import random
 from typing import Dict
 
@@ -11,7 +12,12 @@ ST = 0.14
 
 
 def build(params: Dict, rng: random.Random) -> BuildResult:
-    SW, SD, SH, BH = params["seat_width"], params["seat_depth"], params["seat_height"], params["back_height"]
+    SW, SD, SH, BH = (
+        params["seat_width"],
+        params["seat_depth"],
+        params["seat_height"],
+        params["back_height"],
+    )
     L, style = params["leg_size"], params["back_style"]
     k = Kit(TAGS)
     k.box("seat", (SW, SD, ST), (0, 0, SH - ST / 2), bevel=0.02)

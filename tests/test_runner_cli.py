@@ -49,12 +49,17 @@ def make_project(tmp_path, fake_script, finish=None):
     root = tmp_path / "proj"
     (root / "games" / "farm" / "areas" / "yard").mkdir(parents=True)
     shutil.copy(FIX / "game_STYLE.md", root / "games" / "farm" / "STYLE.md")
-    shutil.copy(FIX / "area_STYLE.md", root / "games" / "farm" / "areas" / "yard" / "STYLE.md")
+    shutil.copy(
+        FIX / "area_STYLE.md", root / "games" / "farm" / "areas" / "yard" / "STYLE.md"
+    )
     fake = tmp_path / "fake_blender.sh"
-    fake.write_text(fake_script.format(root=tmp_path) if "{root}" in fake_script else fake_script)
+    fake.write_text(
+        fake_script.format(root=tmp_path) if "{root}" in fake_script else fake_script
+    )
     fake.chmod(fake.stat().st_mode | stat.S_IEXEC)
-    (root / "rbxasset.config.json").write_text(json.dumps(
-        {"blender": str(fake), "creator_type": "user", "creator_id": "1"}))
+    (root / "rbxasset.config.json").write_text(
+        json.dumps({"blender": str(fake), "creator_type": "user", "creator_id": "1"})
+    )
     adir = root / "games" / "farm" / "chest"
     adir.mkdir(parents=True)
     spec = json.loads((FIX / "cabinet_spec.json").read_text())
@@ -89,8 +94,12 @@ def test_blender_failure_surfaces_log_tail(tmp_path):
     root, _ = make_project(tmp_path, FAKE_FAIL)
     cfg = load_config(root)
     out = root / "games" / "farm" / "chest" / "out"
-    job = {"mode": "build", "asset": "farm/chest", "out_dir": str(out),
-           "manifest_path": str(out / "manifest.json")}
+    job = {
+        "mode": "build",
+        "asset": "farm/chest",
+        "out_dir": str(out),
+        "manifest_path": str(out / "manifest.json"),
+    }
     with pytest.raises(BuildError) as e:
         run_blender(cfg, job)
     assert "the very last line" in str(e.value)
@@ -101,7 +110,14 @@ def test_new_scaffolds_spec_from_vocab(tmp_path):
     assert cli.main(["new", "farm/shelf", "--builder", "cabinet"], root=root) == 0
     spec = json.loads((root / "games" / "farm" / "shelf" / "spec.json").read_text())
     assert spec["builder"] == "cabinet" and spec["seed"] == 1
-    assert set(spec["parts"]) == {"top", "carcass", "fronts", "handles", "legs", "foot_caps"}
+    assert set(spec["parts"]) == {
+        "top",
+        "carcass",
+        "fronts",
+        "handles",
+        "legs",
+        "foot_caps",
+    }
     assert set(spec["parts"].values()) == {"TODO"}
     assert spec["params"]["width"] == 4.2
 
@@ -112,20 +128,27 @@ def test_sample_runs_each_variant_into_own_folder(tmp_path, capsys):
     v.mkdir()
     for n in ("alpha", "beta"):
         write_variant(v / (n + ".json"))
-    code = cli.main(["sample", "farm/chest", str(v / "alpha.json"), str(v / "beta.json")],
-                    root=root)
+    code = cli.main(
+        ["sample", "farm/chest", str(v / "alpha.json"), str(v / "beta.json")], root=root
+    )
     assert code == 0
     assert len(log.read_text().split()) == 2
     s = root / "games" / "farm" / "chest" / "samples"
-    assert (s / "alpha" / "manifest.json").is_file() and (s / "beta" / "manifest.json").is_file()
+    assert (s / "alpha" / "manifest.json").is_file() and (
+        s / "beta" / "manifest.json"
+    ).is_file()
 
 
 def test_blender_timeout_raises_build_error(tmp_path):
     root, _ = make_project(tmp_path, "#!/bin/sh\necho started\nsleep 5\n")
     cfg = load_config(root)
     out = root / "games" / "farm" / "chest" / "out"
-    job = {"mode": "build", "asset": "farm/chest", "out_dir": str(out),
-           "manifest_path": str(out / "manifest.json")}
+    job = {
+        "mode": "build",
+        "asset": "farm/chest",
+        "out_dir": str(out),
+        "manifest_path": str(out / "manifest.json"),
+    }
     with pytest.raises(BuildError) as e:
         run_blender(cfg, job, timeout=1)
     assert "TIMEOUT" in str(e.value)
@@ -137,8 +160,12 @@ def test_stale_manifest_removed_before_failed_build(tmp_path):
     out = root / "games" / "farm" / "chest" / "out"
     out.mkdir(parents=True)
     (out / "manifest.json").write_text("{}")
-    job = {"mode": "build", "asset": "farm/chest", "out_dir": str(out),
-           "manifest_path": str(out / "manifest.json")}
+    job = {
+        "mode": "build",
+        "asset": "farm/chest",
+        "out_dir": str(out),
+        "manifest_path": str(out / "manifest.json"),
+    }
     with pytest.raises(BuildError):
         run_blender(cfg, job)
     assert not (out / "manifest.json").exists()
@@ -213,10 +240,22 @@ def test_deliver_missing_map_file_exits_2(tmp_path, capsys, monkeypatch):
     out = root / "games" / "farm" / "chest" / "out"
     out.mkdir(parents=True)
     (out / "asset.fbx").write_bytes(b"x")
-    (out / "manifest.json").write_text(json.dumps({
-        "fbx": str(out / "asset.fbx"), "bounds": {"min": [0, 0, 0], "max": [1, 1, 1]},
-        "meshes": [{"name": "m", "collide": True, "maps": {"color": str(out / "gone.png")}}],
-        "decals": []}))
+    (out / "manifest.json").write_text(
+        json.dumps(
+            {
+                "fbx": str(out / "asset.fbx"),
+                "bounds": {"min": [0, 0, 0], "max": [1, 1, 1]},
+                "meshes": [
+                    {
+                        "name": "m",
+                        "collide": True,
+                        "maps": {"color": str(out / "gone.png")},
+                    }
+                ],
+                "decals": [],
+            }
+        )
+    )
     monkeypatch.setenv("ROBLOX_API_KEY", "k")
 
     class Stub:  # never touch the network
@@ -225,6 +264,7 @@ def test_deliver_missing_map_file_exits_2(tmp_path, capsys, monkeypatch):
 
         def upload(self, *a):
             return "1"
+
     monkeypatch.setattr(cli, "OpenCloud", Stub)
     assert cli.main(["deliver", "farm/chest"], root=root) == 2
 
@@ -237,6 +277,7 @@ def test_upload_error_exits_1(tmp_path, monkeypatch, capsys):
 
     def boom(*a, **k):
         raise cli.UploadError("nope")
+
     monkeypatch.setattr(cli, "deliver_uploads", boom)
     monkeypatch.setenv("ROBLOX_API_KEY", "k")
     assert cli.main(["deliver", "farm/chest"], root=root) == 1

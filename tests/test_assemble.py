@@ -83,6 +83,7 @@ def test_deliver_dry_run_writes_script_without_network(tmp_path, monkeypatch):
 
     def boom(*a, **k):
         raise AssertionError("network used")
+
     monkeypatch.setattr(socket, "socket", boom)
     assert cli.main(["deliver", "house/cabinet", "--dry-run"], root=tmp_path) == 0
     out = (a / "out" / "assemble.lua").read_text()
@@ -94,6 +95,7 @@ def test_deliver_dry_run_writes_script_without_network(tmp_path, monkeypatch):
 
 def test_missing_required_map_raises_naming_mesh_and_kind():
     import pytest
+
     m = _manifest()
     ids = _ids(m)
     mesh = m["meshes"][0]
@@ -105,6 +107,7 @@ def test_missing_required_map_raises_naming_mesh_and_kind():
 
 def test_missing_metalness_for_metal_mesh_raises():
     import pytest
+
     m = _manifest()
     m["meshes"][0]["metal"] = True
     with pytest.raises(ValueError, match="metalness"):
@@ -113,6 +116,7 @@ def test_missing_metalness_for_metal_mesh_raises():
 
 def test_empty_meshes_raises():
     import pytest
+
     m = _manifest()
     m["meshes"] = []
     with pytest.raises(ValueError, match="no meshes"):

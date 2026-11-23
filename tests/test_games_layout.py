@@ -15,9 +15,15 @@ def test_each_game_has_required_files(game):
 
 @pytest.mark.parametrize("game", GAMES, ids=lambda p: p.name)
 def test_each_game_denies_siblings_and_generation(game):
-    deny = json.loads((game / ".claude" / "settings.json").read_text())["permissions"]["deny"]
+    deny = json.loads((game / ".claude" / "settings.json").read_text())["permissions"][
+        "deny"
+    ]
     for other in GAMES:
         if other != game:
             for tool in ("Read", "Edit"):
-                assert "%s(../%s/**)" % (tool, other.name) in deny, (game.name, tool, other.name)
+                assert "%s(../%s/**)" % (tool, other.name) in deny, (
+                    game.name,
+                    tool,
+                    other.name,
+                )
     assert "Bash(*rbxasset*)" in deny

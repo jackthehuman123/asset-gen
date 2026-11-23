@@ -6,6 +6,7 @@ game file and Style.intent_area for the area file), "camera", "studs_per_tile",
 "budgets", "lighting" (game-only, see LOCKED_KEYS), "palette", "finishes",
 "wear", "avoid".
 """
+
 import json
 import re
 from dataclasses import dataclass, field
@@ -28,7 +29,8 @@ def parse_style_md(text: str) -> dict:
     blocks = _FENCE.findall(text)
     if len(blocks) != 1:
         raise StyleError(
-            "STYLE.md needs exactly one ```json style block, found %d" % len(blocks))
+            "STYLE.md needs exactly one ```json style block, found %d" % len(blocks)
+        )
     try:
         data = json.loads(blocks[0])
     except ValueError as e:
@@ -65,10 +67,13 @@ def load_style(game_md: Path, area_md: Optional[Path] = None) -> Style:
         if key in area:
             raise StyleError(
                 "area STYLE.md may not set '%s'; it is game-level only (locked keys: %s)"
-                % (key, ", ".join(LOCKED_KEYS)))
+                % (key, ", ".join(LOCKED_KEYS))
+            )
     camera = game.get("camera", "first_person")
     if camera not in ("first_person", "third_person"):
-        raise StyleError("camera must be 'first_person' or 'third_person', got %r" % camera)
+        raise StyleError(
+            "camera must be 'first_person' or 'third_person', got %r" % camera
+        )
     studs = float(game.get("studs_per_tile", 4 if camera == "first_person" else 8))
     budgets = {"max_tris_per_mesh": MAX_TRIS, "texture_big": 1024, "texture_small": 512}
     given = game.get("budgets", {})
@@ -80,19 +85,24 @@ def load_style(game_md: Path, area_md: Optional[Path] = None) -> Style:
         if isinstance(v, bool) or not isinstance(v, (int, float)):
             raise StyleError("budgets.%s must be a number, got %r" % (k, v))
     if budgets["max_tris_per_mesh"] > MAX_TRIS:
-        raise StyleError("budgets.max_tris_per_mesh %s exceeds Roblox limit %d"
-                         % (budgets["max_tris_per_mesh"], MAX_TRIS))
+        raise StyleError(
+            "budgets.max_tris_per_mesh %s exceeds Roblox limit %d"
+            % (budgets["max_tris_per_mesh"], MAX_TRIS)
+        )
     for k in ("texture_big", "texture_small"):
         if budgets[k] > MAX_TEXTURE:
-            raise StyleError("budgets.%s %s exceeds Roblox limit %d"
-                             % (k, budgets[k], MAX_TEXTURE))
+            raise StyleError(
+                "budgets.%s %s exceeds Roblox limit %d" % (k, budgets[k], MAX_TEXTURE)
+            )
     lighting = game.get("lighting", {"preset": "overcast_exterior"})
     if not isinstance(lighting, dict):
         raise StyleError("lighting must be an object, got %r" % (lighting,))
     preset = lighting.get("preset", "overcast_exterior")
     if preset not in LIGHTING_PRESETS:
-        raise StyleError("lighting.preset %r is unknown; allowed: %s"
-                         % (preset, ", ".join(LIGHTING_PRESETS)))
+        raise StyleError(
+            "lighting.preset %r is unknown; allowed: %s"
+            % (preset, ", ".join(LIGHTING_PRESETS))
+        )
     finishes = dict(game.get("finishes", {}))
     finishes.update(area.get("finishes", {}))
     palette = dict(game.get("palette", {}))

@@ -2,10 +2,15 @@
 
 The Blender -> Studio axis mapping lives ONLY in to_studio (Task 1 may correct it).
 """
+
 from typing import Dict, List
 
-MAP_PROPS = [("color", "ColorMap"), ("normal", "NormalMap"),
-             ("roughness", "RoughnessMap"), ("metalness", "MetalnessMap")]
+MAP_PROPS = [
+    ("color", "ColorMap"),
+    ("normal", "NormalMap"),
+    ("roughness", "RoughnessMap"),
+    ("metalness", "MetalnessMap"),
+]
 DECAL_THICKNESS = 0.05
 STUDS_PER_UNIT = 1.0  # Blender unit -> studs; Task 1 corrects the scale here
 
@@ -47,8 +52,11 @@ def _vec(v: List[float]) -> str:
 
 def generate_luau(manifest: Dict, ids: Dict[str, str], asset_name: str) -> str:
     fbx = manifest.get("fbx")
-    model_id = ids[fbx] if fbx in ids else next(
-        (i for p, i in ids.items() if p.endswith(".fbx")), None)
+    model_id = (
+        ids[fbx]
+        if fbx in ids
+        else next((i for p, i in ids.items() if p.endswith(".fbx")), None)
+    )
     if model_id is None:
         raise ValueError("no model asset id in ids")
 
@@ -56,14 +64,21 @@ def generate_luau(manifest: Dict, ids: Dict[str, str], asset_name: str) -> str:
         raise ValueError("manifest has no meshes")
     mesh_lines = []
     for m in manifest["meshes"]:
-        required = ["color", "normal", "roughness"] + (["metalness"] if m.get("metal") else [])
+        required = ["color", "normal", "roughness"] + (
+            ["metalness"] if m.get("metal") else []
+        )
         for kind in required:
             if kind not in m.get("maps", {}) or m["maps"][kind] not in ids:
                 raise ValueError("mesh %s is missing its %s map id" % (m["name"], kind))
-        maps = ["%s = %s" % (k, _s(ids[m["maps"][k]]))
-                for k, _ in MAP_PROPS if k in m["maps"] and m["maps"][k] in ids]
-        mesh_lines.append("\t{ name = %s, collide = %s, %s }" % (
-            _s(m["name"]), "true" if m["collide"] else "false", ", ".join(maps)))
+        maps = [
+            "%s = %s" % (k, _s(ids[m["maps"][k]]))
+            for k, _ in MAP_PROPS
+            if k in m["maps"] and m["maps"][k] in ids
+        ]
+        mesh_lines.append(
+            "\t{ name = %s, collide = %s, %s }"
+            % (_s(m["name"]), "true" if m["collide"] else "false", ", ".join(maps))
+        )
 
     decal_lines = []
     for d in manifest.get("decals", []):
@@ -72,10 +87,18 @@ def generate_luau(manifest: Dict, ids: Dict[str, str], asset_name: str) -> str:
         pos, nrm = to_studio(d["position"]), to_studio(d["normal"])
         up = "Vector3.zAxis" if abs(nrm[1]) > 0.99 else "Vector3.yAxis"
         decal_lines.append(
-            "\t{ name = %s, image = %s, pos = %s, normal = %s, up = %s, w = %s, h = %s, opacity = %s }" % (
-                _s(d["name"]), _s(ids[d["image"]]), _vec(pos), _vec(nrm), up,
-                _n(d["size"][0] * STUDS_PER_UNIT), _n(d["size"][1] * STUDS_PER_UNIT),
-                _n(d["opacity"])))
+            "\t{ name = %s, image = %s, pos = %s, normal = %s, up = %s, w = %s, h = %s, opacity = %s }"
+            % (
+                _s(d["name"]),
+                _s(ids[d["image"]]),
+                _vec(pos),
+                _vec(nrm),
+                up,
+                _n(d["size"][0] * STUDS_PER_UNIT),
+                _n(d["size"][1] * STUDS_PER_UNIT),
+                _n(d["opacity"]),
+            )
+        )
 
     lo, hi = to_studio(manifest["bounds"]["min"]), to_studio(manifest["bounds"]["max"])
     # to_studio can flip an axis, so re-sort per axis

@@ -51,8 +51,10 @@ RESERVED = ("areas", "_tiles")
 def split_ref(ref: str) -> Tuple[str, str]:
     parts = ref.split("/")
     if len(parts) != 2 or not all(parts) or parts[1] in RESERVED:
-        raise ValueError(f"asset ref must be '<game>/<asset>' (asset not one of "
-                         f"{', '.join(RESERVED)}), got {ref!r}")
+        raise ValueError(
+            f"asset ref must be '<game>/<asset>' (asset not one of "
+            f"{', '.join(RESERVED)}), got {ref!r}"
+        )
     return parts[0], parts[1]
 
 

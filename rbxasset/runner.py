@@ -1,4 +1,5 @@
 """Runs headless Blender on a job. bpy-free, Python 3.9 compatible."""
+
 import json
 import subprocess
 from pathlib import Path
@@ -27,11 +28,25 @@ def run_blender(cfg: Config, job: Dict, timeout: int = 3600) -> Dict:
     stale = Path(job["manifest_path"])
     if stale.exists():
         stale.unlink()  # a failed build must not leave the previous manifest behind
-    cmd = [cfg.blender, "-b", "--factory-startup", "--python-exit-code", "1",
-           "--python", str(ENTRY), "--", str(job_path)]
+    cmd = [
+        cfg.blender,
+        "-b",
+        "--factory-startup",
+        "--python-exit-code",
+        "1",
+        "--python",
+        str(ENTRY),
+        "--",
+        str(job_path),
+    ]
     try:
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                              universal_newlines=True, timeout=timeout)
+        proc = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            timeout=timeout,
+        )
         text, rc = proc.stdout, proc.returncode
     except subprocess.TimeoutExpired as e:
         partial = e.stdout or ""

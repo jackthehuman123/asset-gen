@@ -19,17 +19,42 @@ VOCAB = Vocab(
     params={
         "width": _N(15.0, "party wall to party wall, about 16 ft"),
         "depth": _N(38.0),
-        "floors": ParamDef("int", default=4, doc="storeys above the raised basement (3-5)"),
+        "floors": ParamDef(
+            "int", default=4, doc="storeys above the raised basement (3-5)"
+        ),
         "floor_height": _N(10.5),
         "basement_height": _N(4.5),
-        "bays": ParamDef("int", default=3, doc="window bays across the front; the door takes the first"),
+        "bays": ParamDef(
+            "int",
+            default=3,
+            doc="window bays across the front; the door takes the first",
+        ),
         "stoop": ParamDef("bool", default=True),
         "cornice": ParamDef("bool", default=True),
-        "street": ParamDef("bool", default=True, doc="sidewalk, curb and road in front"),
+        "street": ParamDef(
+            "bool", default=True, doc="sidewalk, curb and road in front"
+        ),
     },
-    part_tags=("base", "wall", "wall_b", "brick", "trim", "sash", "glass", "door", "soot", "iron", "groove",
-               "roof", "ground", "curb", "road"),
-    tiled_tags=frozenset({"base", "wall", "wall_b", "brick", "soot", "roof", "ground", "road"}),
+    part_tags=(
+        "base",
+        "wall",
+        "wall_b",
+        "brick",
+        "trim",
+        "sash",
+        "glass",
+        "door",
+        "soot",
+        "iron",
+        "groove",
+        "roof",
+        "ground",
+        "curb",
+        "road",
+    ),
+    tiled_tags=frozenset(
+        {"base", "wall", "wall_b", "brick", "soot", "roof", "ground", "road"}
+    ),
     big_tags=frozenset({"wall", "base", "brick", "trim"}),
     no_collide_tags=frozenset({"trim", "sash", "iron", "groove", "glass"}),
     validate=validate,

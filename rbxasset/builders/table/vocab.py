@@ -13,7 +13,9 @@ def validate(p, budgets):
     rules.num(p, "apron_height", 0.0, 1.2)
     rules.choice(p, "leg_shape", ("square", "round"))
     if p["top_thickness"] >= p["height"] / 2:
-        raise ValueError("top_thickness must be under half of height, got %r" % p["top_thickness"])
+        raise ValueError(
+            "top_thickness must be under half of height, got %r" % p["top_thickness"]
+        )
 
 
 VOCAB = Vocab(

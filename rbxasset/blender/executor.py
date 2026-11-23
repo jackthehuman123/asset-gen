@@ -1,5 +1,6 @@
 """Executor: join tagged parts, enforce triangle budget, bake PBR maps, export FBX.
 Runs inside Blender."""
+
 import math
 import os
 import time
@@ -97,28 +98,50 @@ def join_parts(parts, spec, vocab_sets, style, ctx, prefix) -> List[MeshInfo]:
             raise BudgetError(f"{o.name}: {tris} triangles > {max_tris}")
         tiled = tag in vocab_sets.get("tiled_tags", [])
         if tiled:
-            tiling.tile_uvs(o, style["studs_per_tile"], use_grain=spec["finishes"][fin]["type"] == "wood")
+            tiling.tile_uvs(
+                o,
+                style["studs_per_tile"],
+                use_grain=spec["finishes"][fin]["type"] == "wood",
+            )
         else:
             bpy.ops.object.mode_set(mode="EDIT")
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.01)
             bpy.ops.object.mode_set(mode="OBJECT")
         f = spec["finishes"][fin]
-        fn = finishes.make_finish(f"{tag}_{fin}_proc", f, spec.get("wear", {}), ctx,
-                                  tile=style["studs_per_tile"] if tiled else None)
+        fn = finishes.make_finish(
+            f"{tag}_{fin}_proc",
+            f,
+            spec.get("wear", {}),
+            ctx,
+            tile=style["studs_per_tile"] if tiled else None,
+        )
         o.data.materials.clear()
         o.data.materials.append(fn.mat)
-        meshes.append(MeshInfo(
-            obj=o, name=o.name, tag=tag, finish=fin, tris=tris, tiled=tiled,
-            metal=f["type"] == "metal", collide=tag not in vocab_sets.get("no_collide_tags", []),
-            big=tag in vocab_sets.get("big_tags", []),
-            mat=fn.mat, sockets=fn.sockets, bsdf=fn.bsdf, out=fn.out))
+        meshes.append(
+            MeshInfo(
+                obj=o,
+                name=o.name,
+                tag=tag,
+                finish=fin,
+                tris=tris,
+                tiled=tiled,
+                metal=f["type"] == "metal",
+                collide=tag not in vocab_sets.get("no_collide_tags", []),
+                big=tag in vocab_sets.get("big_tags", []),
+                mat=fn.mat,
+                sockets=fn.sockets,
+                bsdf=fn.bsdf,
+                out=fn.out,
+            )
+        )
     return meshes
 
 
 def bake_meshes(meshes, tex_dir, tiles_dir, spec, style, samples=32) -> float:
     t0 = time.time()
     b = style["budgets"]
+
     def res_of(me):
         return b["texture_big"] if me.big else b["texture_small"]
 
@@ -127,9 +150,17 @@ def bake_meshes(meshes, tex_dir, tiles_dir, spec, style, samples=32) -> float:
     for me in meshes:
         if me.tiled:
             tile_res[me.finish] = max(tile_res.get(me.finish, 0), res_of(me))
-    tile_maps = {fin: tiling.bake_tile(fin, spec["finishes"][fin], spec.get("wear", {}),
-                                       style["studs_per_tile"], res, tiles_dir)
-                 for fin, res in tile_res.items()}
+    tile_maps = {
+        fin: tiling.bake_tile(
+            fin,
+            spec["finishes"][fin],
+            spec.get("wear", {}),
+            style["studs_per_tile"],
+            res,
+            tiles_dir,
+        )
+        for fin, res in tile_res.items()
+    }
     for me in meshes:
         if me.tiled:
             me.maps = dict(tile_maps[me.finish])
@@ -215,6 +246,13 @@ def export_fbx(meshes, path) -> None:
     for me in meshes:
         me.obj.select_set(True)
     bpy.ops.export_scene.fbx(
-        filepath=path, use_selection=True, apply_unit_scale=True,
-        apply_scale_options="FBX_SCALE_UNITS", axis_forward="-Z", axis_up="Y",
-        mesh_smooth_type="FACE", path_mode="COPY", embed_textures=True)
+        filepath=path,
+        use_selection=True,
+        apply_unit_scale=True,
+        apply_scale_options="FBX_SCALE_UNITS",
+        axis_forward="-Z",
+        axis_up="Y",
+        mesh_smooth_type="FACE",
+        path_mode="COPY",
+        embed_textures=True,
+    )

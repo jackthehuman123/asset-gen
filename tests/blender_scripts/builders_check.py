@@ -1,4 +1,5 @@
 """Runs inside Blender: builder checks, selected by the first arg after '--'."""
+
 import random
 import sys
 from pathlib import Path
@@ -103,8 +104,11 @@ def t_house_budget():
 def _tile_frame(p, side):
     """(d, n): down-slope and roof-normal unit vectors for a roof side (-1 front, +1 back)."""
     import math
+
     a = math.radians(p["roof_pitch_deg"])
-    return Vector((0, side * math.cos(a), -math.sin(a))), Vector((0, side * math.sin(a), math.cos(a)))
+    return Vector((0, side * math.cos(a), -math.sin(a))), Vector(
+        (0, side * math.sin(a), math.cos(a))
+    )
 
 
 def _profile(o, d):
@@ -117,6 +121,7 @@ def _profile(o, d):
 
 def t_house_pan_cover():
     import statistics
+
     _, res = build_house()
     for tag in ("tiles_front", "tiles_back"):
         names = [o.name for o in res.parts[tag]]
@@ -131,7 +136,7 @@ def t_house_pan_cover():
     p, res = build_house({"roof_sag": 0.0})
     for side, tag in ((-1, "tiles_front"), (1, "tiles_back")):
         d, n = _tile_frame(p, side)
-        cols = {}   # (kind, col) -> [(course, center x, s_up)]
+        cols = {}  # (kind, col) -> [(course, center x, s_up)]
         widths = {"pan": [], "cover": []}
         for o in res.parts[tag]:
             kind, _side, col, course = o.name.split(".")[0].split("_")
@@ -142,26 +147,50 @@ def t_house_pan_cover():
             widths[kind].append(width)
             if kind == "pan":
                 check(edge - mid >= 0.04, ("pan top not concave", o.name, mid, edge))
-                check(edge - mid <= 0.35 * width, ("pan dish too deep (log)", o.name, mid, edge, width))
+                check(
+                    edge - mid <= 0.35 * width,
+                    ("pan dish too deep (log)", o.name, mid, edge, width),
+                )
             else:
                 check(mid - edge >= 0.08, ("cover top not convex", o.name, mid, edge))
             # each tile rises toward its lower end (laps over the course below)
             s1 = max(v.dot(d) for v in vs)
             low_top = max(v.dot(n) for v in vs if v.dot(d) > s1 - 0.07)
-            check(low_top - max(hs) >= 0.06, ("no course step", o.name, low_top, max(hs)))
-            cols.setdefault((kind, int(col)), []).append((int(course), sum(v.x for v in ring) / len(ring),
-                                                          min(v.dot(d) for v in vs)))
+            check(
+                low_top - max(hs) >= 0.06, ("no course step", o.name, low_top, max(hs))
+            )
+            cols.setdefault((kind, int(col)), []).append(
+                (
+                    int(course),
+                    sum(v.x for v in ring) / len(ring),
+                    min(v.dot(d) for v in vs),
+                )
+            )
         pw, cw = statistics.median(widths["pan"]), statistics.median(widths["cover"])
         print(tag, "pan width", pw, "cover width", cw)
         check(pw > cw * 1.6, ("pan not wider than cover", pw, cw))
         check(0.6 - cw >= 0.3, ("covers hide the pans", cw))
-        pan_x = {c: statistics.median(t[1] for t in v) for (k, c), v in cols.items() if k == "pan"}
-        cov_x = {c: statistics.median(t[1] for t in v) for (k, c), v in cols.items() if k == "cover"}
+        pan_x = {
+            c: statistics.median(t[1] for t in v)
+            for (k, c), v in cols.items()
+            if k == "pan"
+        }
+        cov_x = {
+            c: statistics.median(t[1] for t in v)
+            for (k, c), v in cols.items()
+            if k == "cover"
+        }
         cs = sorted(pan_x)
         for a, b in zip(cs, cs[1:]):
-            check(b == a + 1 and abs(pan_x[b] - pan_x[a] - 0.6) < 0.03, ("pan pitch", a, b, pan_x[a], pan_x[b]))
+            check(
+                b == a + 1 and abs(pan_x[b] - pan_x[a] - 0.6) < 0.03,
+                ("pan pitch", a, b, pan_x[a], pan_x[b]),
+            )
         for c, x in cov_x.items():
-            check(abs(x - (pan_x[c] + 0.3)) < 0.04, ("cover not over joint", c, x, pan_x[c]))
+            check(
+                abs(x - (pan_x[c] + 0.3)) < 0.04,
+                ("cover not over joint", c, x, pan_x[c]),
+            )
         # courses: ~1.0-1.2 apart down the slope
         for (kind, c), v in cols.items():
             starts = {}
@@ -170,8 +199,10 @@ def t_house_pan_cover():
             ks = sorted(starts)
             gaps = [(starts[b] - starts[a]) / (b - a) for a, b in zip(ks, ks[1:])]
             check(len(ks) >= 8, ("too few courses", kind, c, ks))
-            check(statistics.median(gaps) >= 1.0 and statistics.median(gaps) <= 1.2,
-                  ("course spacing", kind, c, gaps))
+            check(
+                statistics.median(gaps) >= 1.0 and statistics.median(gaps) <= 1.2,
+                ("course spacing", kind, c, gaps),
+            )
 
 
 def t_house_sag():
@@ -191,7 +222,9 @@ def t_house_sag():
     dg = bpy.context.evaluated_depsgraph_get()
     tops = []
     for x in (0.0, -W / 2, W / 2):
-        ok, loc, _n, _i, obj, _m = bpy.context.scene.ray_cast(dg, Vector((x, 0, 100)), Vector((0, 0, -1)))
+        ok, loc, _n, _i, obj, _m = bpy.context.scene.ray_cast(
+            dg, Vector((x, 0, 100)), Vector((0, 0, -1))
+        )
         check(ok and obj.name in ridge, ("ray missed ridge", x))
         tops.append(loc.z)
     check(max(tops) - min(tops) < 1e-3, ("flat", tops))
@@ -212,7 +245,9 @@ def t_house_openings():
         origin = Vector((x, -D / 2 - 30, z))
         hits = []
         while True:
-            ok, loc, _n, _i, obj, _m = bpy.context.scene.ray_cast(dg, origin, Vector((0, 1, 0)))
+            ok, loc, _n, _i, obj, _m = bpy.context.scene.ray_cast(
+                dg, origin, Vector((0, 1, 0))
+            )
             if not ok or loc.y >= 0:
                 break
             hits.append((tag_of.get(obj.name, "?"), round(loc.y, 2)))
@@ -220,7 +255,9 @@ def t_house_openings():
         print("bay", i, "hits", hits)
         bad = [h for h in hits if h[0] in ("plaster", "siding")]
         check(not bad, ("bay", i, bad))
-        check(not any(h[1] > -D / 2 + 0.5 for h in hits if h[0] == "?"), "unknown objects")
+        check(
+            not any(h[1] > -D / 2 + 0.5 for h in hits if h[0] == "?"), "unknown objects"
+        )
 
 
 def t_cabinet_dims():
@@ -255,18 +292,33 @@ def t_phonebooth_dims():
     check(max(xs) - min(xs) >= 3.2 and max(ys) - min(ys) >= 3.0, "footprint")
     check(abs(max(xs) + min(xs)) <= 0.02 and abs(max(ys) + min(ys)) <= 0.08, "centred")
     check(res.ctx["W"] == 3.2, res.ctx)
-    check([x[0] for x in res.shots] == ["wide", "close", "sign"], [x[0] for x in res.shots])
+    check(
+        [x[0] for x in res.shots] == ["wide", "close", "sign"],
+        [x[0] for x in res.shots],
+    )
     gz = [v.z for v in world_verts(res.parts["glazing"])]
-    check(abs(min(gz) - (0.25 + 0.85)) <= 0.05, ("glazing starts above the lower panels", min(gz)))
-    check(len(res.parts["sign"]) > 4 * 10, ("sign needs border, crown and letters", len(res.parts["sign"])))
-    check(len(res.parts["handle"]) >= 5, ("handle plate and hinges", len(res.parts["handle"])))
+    check(
+        abs(min(gz) - (0.25 + 0.85)) <= 0.05,
+        ("glazing starts above the lower panels", min(gz)),
+    )
+    check(
+        len(res.parts["sign"]) > 4 * 10,
+        ("sign needs border, crown and letters", len(res.parts["sign"])),
+    )
+    check(
+        len(res.parts["handle"]) >= 5,
+        ("handle plate and hinges", len(res.parts["handle"])),
+    )
     for tag, objs in res.parts.items():
         check(joined_tris(objs) < MAX_TRIS, (tag, "over budget"))
     clear_scene()
     p["lower_panel_height"] = 1.4
     res = phonebooth_build.build(p, random.Random(1))
     gz = [v.z for v in world_verts(res.parts["glazing"])]
-    check(abs(min(gz) - (0.25 + 1.4)) <= 0.05, ("lower_panel_height moves the glazing", min(gz)))
+    check(
+        abs(min(gz) - (0.25 + 1.4)) <= 0.05,
+        ("lower_panel_height moves the glazing", min(gz)),
+    )
     clear_scene()
     p["lower_panel_height"] = 0.85
     p["glazing"] = False

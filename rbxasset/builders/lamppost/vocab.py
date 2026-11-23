@@ -13,8 +13,10 @@ def validate(p, budgets):
     rules.num(p, "head_radius", 0.15, 1.5)
     rules.choice(p, "head_style", ("lantern", "globe"))
     if p["base_height"] + p["head_radius"] * 2.2 + 0.5 > p["height"]:
-        raise ValueError("height %r is too short for base_height %r plus the head"
-                         % (p["height"], p["base_height"]))
+        raise ValueError(
+            "height %r is too short for base_height %r plus the head"
+            % (p["height"], p["base_height"])
+        )
 
 
 VOCAB = Vocab(
@@ -32,6 +34,14 @@ VOCAB = Vocab(
     big_tags=frozenset({"pole", "head"}),
     no_collide_tags=frozenset({"head", "lens", "arm"}),
     validate=validate,
-    makes=("lamp post", "lamppost", "street lamp", "street light", "bollard", "signpost", "flagpole"),
+    makes=(
+        "lamp post",
+        "lamppost",
+        "street lamp",
+        "street light",
+        "bollard",
+        "signpost",
+        "flagpole",
+    ),
     not_for=("tree", "tower", "building", "chandelier"),
 )

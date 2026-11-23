@@ -12,6 +12,7 @@ THROWAWAY SPIKE: style spec -> Blender -> baked PBR maps -> Roblox-ready FBX.
 
 Units: 1 Blender unit = 1 stud.
 """
+
 import json
 import math
 import os
@@ -19,7 +20,7 @@ import sys
 
 import bpy
 
-argv = sys.argv[sys.argv.index("--") + 1:]
+argv = sys.argv[sys.argv.index("--") + 1 :]
 SPEC_PATH, OUT = argv[0], argv[1]
 TEX_DIR = os.path.join(OUT, "textures")
 os.makedirs(TEX_DIR, exist_ok=True)
@@ -54,7 +55,9 @@ def box(tag, size, loc, bevel=BEVEL):
 
 
 def cyl(tag, r, depth, loc, rot, verts=16):
-    bpy.ops.mesh.primitive_cylinder_add(vertices=verts, radius=r, depth=depth, location=loc, rotation=rot)
+    bpy.ops.mesh.primitive_cylinder_add(
+        vertices=verts, radius=r, depth=depth, location=loc, rotation=rot
+    )
     PARTS[tag].append(bpy.context.active_object)
 
 
@@ -88,24 +91,45 @@ for r in (0.28, 0.33, 0.39):
     h = inner_h * r
     cz = z - h / 2
     box("fronts", (x1 - x0 - GAP, PANEL_T, h - GAP), ((x0 + x1) / 2, fy, cz))
-    handle(min(0.6, (x1 - x0) * 0.4), ((x0 + x1) / 2, fy - PANEL_T / 2, cz + h * 0.18), vertical=False)
+    handle(
+        min(0.6, (x1 - x0) * 0.4),
+        ((x0 + x1) / 2, fy - PANEL_T / 2, cz + h * 0.18),
+        vertical=False,
+    )
     z -= h
 
 dx0, dx1 = divider_x + 0.025, W / 2 - FRAME
 door_w = (dx1 - dx0) / 2
 for i in range(2):
     cx = dx0 + door_w * (i + 0.5)
-    box("fronts", (door_w - GAP, PANEL_T, inner_h - GAP), (cx, fy, inner_bottom + inner_h / 2))
-    box("fronts", (door_w - 0.3, 0.012, inner_h - 0.3), (cx, fy - PANEL_T / 2 - 0.004, inner_bottom + inner_h / 2),
-        bevel=0.004)
+    box(
+        "fronts",
+        (door_w - GAP, PANEL_T, inner_h - GAP),
+        (cx, fy, inner_bottom + inner_h / 2),
+    )
+    box(
+        "fronts",
+        (door_w - 0.3, 0.012, inner_h - 0.3),
+        (cx, fy - PANEL_T / 2 - 0.004, inner_bottom + inner_h / 2),
+        bevel=0.004,
+    )
     hx = cx + (door_w / 2 - 0.14) * (1 if i == 0 else -1)
-    handle(inner_h * 0.42, (hx, fy - PANEL_T / 2, inner_bottom + inner_h * 0.55), vertical=True)
+    handle(
+        inner_h * 0.42,
+        (hx, fy - PANEL_T / 2, inner_bottom + inner_h * 0.55),
+        vertical=True,
+    )
 
 for sx in (-1, 1):
     for sy in (-1, 1):
         lx, ly = sx * (W / 2 - 0.22), sy * (D / 2 - 0.2)
-        bpy.ops.mesh.primitive_cone_add(vertices=16, radius1=0.035, radius2=0.075, depth=LEG_H + 0.02,
-                                        location=(lx, ly, LEG_H / 2))
+        bpy.ops.mesh.primitive_cone_add(
+            vertices=16,
+            radius1=0.035,
+            radius2=0.075,
+            depth=LEG_H + 0.02,
+            location=(lx, ly, LEG_H / 2),
+        )
         leg = bpy.context.active_object
         leg.rotation_euler = (-sy * math.radians(6), sx * math.radians(6), 0)
         PARTS["legs"].append(leg)
@@ -122,7 +146,7 @@ def lin(hexstr):
     h = hexstr.lstrip("#")
     out = []
     for i in (0, 2, 4):
-        c = int(h[i:i + 2], 16) / 255
+        c = int(h[i : i + 2], 16) / 255
         out.append(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4)
     return (*out, 1.0)
 
@@ -224,8 +248,12 @@ def make_finish(name, f):
             fine_scale = [60 * s] * 3
             coarse_scale[along] = 0.15 * s
             fine_scale[along] = 0.3 * s
-            gi = m("MULTIPLY_ADD", noise(coarse_scale, 2.5, 8, 0.65, 0.4), 0.7,
-                   m("MULTIPLY", noise(fine_scale, 3.0, 3), 0.3))
+            gi = m(
+                "MULTIPLY_ADD",
+                noise(coarse_scale, 2.5, 8, 0.65, 0.4),
+                0.7,
+                m("MULTIPLY", noise(fine_scale, 3.0, 3), 0.3),
+            )
             term = m("MULTIPLY", gi, w)
             g = term if g is None else m("ADD", g, term)
         ramp = N.new("ShaderNodeValToRGB")
@@ -242,21 +270,38 @@ def make_finish(name, f):
     elif t == "paint":
         color = rgb(f["color"])
         peel = noise((1, 1, 1), 400.0, 2)
-        rough = m("MULTIPLY_ADD", m("SUBTRACT", peel, 0.5), 0.05, f.get("roughness", 0.4))
+        rough = m(
+            "MULTIPLY_ADD", m("SUBTRACT", peel, 0.5), 0.05, f.get("roughness", 0.4)
+        )
         metal = 0.0
         bump_height, bump_strength = peel, f.get("orange_peel", 0.02)
     elif t == "metal":
         color = rgb(f["color"])
         br = noise((1, 80, 80), 6.0, 4)
-        rough = m("MULTIPLY_ADD", m("SUBTRACT", br, 0.5), 0.3 * f.get("brushed", 0.3), f.get("roughness", 0.4))
+        rough = m(
+            "MULTIPLY_ADD",
+            m("SUBTRACT", br, 0.5),
+            0.3 * f.get("brushed", 0.3),
+            f.get("roughness", 0.4),
+        )
         metal = 1.0
         bump_height, bump_strength = br, 0.05 * f.get("brushed", 0.3)
         if f.get("rust"):
             ao = N.new("ShaderNodeAmbientOcclusion")
             ao.inputs["Distance"].default_value = 0.05
             crev = m("SUBTRACT", 1.0, ao.outputs["AO"])
-            blotch = smooth(noise((1, 1, 1), 18.0, 8, 0.7), 0.55 - 0.15 * f["rust"], 0.62)
-            rust = m("MINIMUM", m("ADD", m("MULTIPLY", blotch, f["rust"] * 1.4), m("MULTIPLY", crev, 2.0)), 1.0)
+            blotch = smooth(
+                noise((1, 1, 1), 18.0, 8, 0.7), 0.55 - 0.15 * f["rust"], 0.62
+            )
+            rust = m(
+                "MINIMUM",
+                m(
+                    "ADD",
+                    m("MULTIPLY", blotch, f["rust"] * 1.4),
+                    m("MULTIPLY", crev, 2.0),
+                ),
+                1.0,
+            )
             color = lerp_c(color, rgb(f.get("rust_color", "#5C2C14")), rust)
             rough = lerp_f(rough, 0.9, rust)
             metal = lerp_f(1.0, 0.0, rust)
@@ -282,7 +327,11 @@ def make_finish(name, f):
         ao.inputs["Distance"].default_value = 0.25
         ao.samples = 16
         crev = smooth(m("SUBTRACT", 1.0, ao.outputs["AO"]), 0.05, 0.6)
-        grime = m("MULTIPLY", m("MULTIPLY", crev, WEAR["grime"]), m("ADD", 0.5, noise((1, 1, 1), 12.0, 4)))
+        grime = m(
+            "MULTIPLY",
+            m("MULTIPLY", crev, WEAR["grime"]),
+            m("ADD", 0.5, noise((1, 1, 1), 12.0, 4)),
+        )
         color = lerp_c(color, rgb("#120C08"), m("MINIMUM", grime, 0.9))
         rough = lerp_f(rough, 0.85, grime)
 
@@ -315,13 +364,25 @@ def make_finish(name, f):
         jitter = m("MULTIPLY", m("SUBTRACT", noise((1, 1, 1), 3.0, 4), 0.5), 0.25)
         u = m("ADD", m("DIVIDE", m("ADD", obj_x, W / 2), W), jitter)
         v = m("ADD", m("DIVIDE", obj_z, H_TOTAL), jitter)
-        region = m("MULTIPLY",
-                   m("MULTIPLY", smooth(u, rx[0] - 0.02, rx[0] + 0.05), m("SUBTRACT", 1.0, smooth(u, rx[1] - 0.08, rx[1]))),
-                   m("MULTIPLY", smooth(v, rz[0], rz[0] + 0.12), m("SUBTRACT", 1.0, smooth(v, rz[1] + 0.05, rz[1] + 0.1))))
+        region = m(
+            "MULTIPLY",
+            m(
+                "MULTIPLY",
+                smooth(u, rx[0] - 0.02, rx[0] + 0.05),
+                m("SUBTRACT", 1.0, smooth(u, rx[1] - 0.08, rx[1])),
+            ),
+            m(
+                "MULTIPLY",
+                smooth(v, rz[0], rz[0] + 0.12),
+                m("SUBTRACT", 1.0, smooth(v, rz[1] + 0.05, rz[1] + 0.1)),
+            ),
+        )
         drips = smooth(noise((14, 14, 0.5), 3.0, 4, 0.5), 0.55, 0.6)
         # drips get denser toward the top of the region (smear source)
         source = smooth(v, rz[1] - 0.3, rz[1])
-        smear = m("MULTIPLY", smooth(noise((1, 1, 1), 4.0, 6, 0.6, 0.8), 0.45, 0.5), source)
+        smear = m(
+            "MULTIPLY", smooth(noise((1, 1, 1), 4.0, 6, 0.6, 0.8), 0.45, 0.5), source
+        )
         mask = m("MINIMUM", m("MULTIPLY", m("MAXIMUM", drips, smear), region), 1.0)
         mask = m("MULTIPLY", mask, blood["amount"])
         color = lerp_c(color, rgb(blood["color"]), mask)
@@ -473,6 +534,7 @@ bpy.ops.export_scene.fbx(
     embed_textures=True,
 )
 
+
 # ------------------------------------------------------------------ preview scene (not exported)
 def plain(name, hexstr, rough=0.8):
     m = bpy.data.materials.new(name)
@@ -491,7 +553,9 @@ def prop(size, loc, mat):
 
 
 ABANDONED = bool(spec.get("wear"))
-if ABANDONED:  # dim, dusty Japanese room: dirty plaster wall, old tatami, cold window light
+if (
+    ABANDONED
+):  # dim, dusty Japanese room: dirty plaster wall, old tatami, cold window light
     wall, floor = plain("Wall", "#857D6E", 0.95), plain("Floor", "#77704F", 0.9)
     bg, bg_strength = (0.55, 0.6, 0.7, 1), 0.08
 else:  # bright white modern living room
@@ -501,7 +565,11 @@ prop((30, 30, 0.1), (0, 0, -0.05), floor)
 prop((30, 0.1, 12), (0, D / 2 + 0.6, 6), wall)
 top_z = LEG_H + BODY_H
 tv_w = W * 0.75
-prop((tv_w, 0.08, tv_w * 9 / 16), (0, 0.15, top_z + 0.12 + tv_w * 9 / 32), plain("TV", "#0B0B0C", 0.2))
+prop(
+    (tv_w, 0.08, tv_w * 9 / 16),
+    (0, 0.15, top_z + 0.12 + tv_w * 9 / 32),
+    plain("TV", "#0B0B0C", 0.2),
+)
 prop((0.9, 0.5, 0.04), (0, 0.15, top_z + 0.02), plain("TVStand", "#1A1A1A", 0.4))
 prop((0.12, 0.12, 0.12), (0, 0.15, top_z + 0.08), plain("TVNeck", "#1A1A1A", 0.4))
 
@@ -539,8 +607,12 @@ scene.render.resolution_x, scene.render.resolution_y = 1200, 900
 
 for name, cam_loc, tgt, lens in (
     ("preview_wide", (-W * 1.05, -W * 1.6, 3.4), (0, 0, H_TOTAL * 0.6 + 0.5), 40),
-    ("preview_close", (-W / 2 + DRAWER_COL_W * 0.5 - 0.9, -D / 2 - 2.3, LEG_H + BODY_H * 0.65 + 0.7),
-     (-W / 2 + DRAWER_COL_W * 0.5, -D / 2, LEG_H + BODY_H * 0.6), 50),
+    (
+        "preview_close",
+        (-W / 2 + DRAWER_COL_W * 0.5 - 0.9, -D / 2 - 2.3, LEG_H + BODY_H * 0.65 + 0.7),
+        (-W / 2 + DRAWER_COL_W * 0.5, -D / 2, LEG_H + BODY_H * 0.6),
+        50,
+    ),
 ):
     cam.location = cam_loc
     target.location = tgt

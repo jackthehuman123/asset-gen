@@ -15,6 +15,7 @@ Blender coordinates (Z up, studs), converted to Roblox in the upload step.
    "previews": [path], "bake_seconds": float}
 The decal never goes into the FBX; the manifest is its only record.
 """
+
 import importlib
 import json
 import math
@@ -36,9 +37,13 @@ DECAL_RES = 256
 
 
 def _bounds(meshes):
-    pts = [o.matrix_world @ Vector(c) for o in (m.obj for m in meshes) for c in o.bound_box]
-    return {"min": [min(p[i] for p in pts) for i in range(3)],
-            "max": [max(p[i] for p in pts) for i in range(3)]}
+    pts = [
+        o.matrix_world @ Vector(c) for o in (m.obj for m in meshes) for c in o.bound_box
+    ]
+    return {
+        "min": [min(p[i] for p in pts) for i in range(3)],
+        "max": [max(p[i] for p in pts) for i in range(3)],
+    }
 
 
 def _render_decals(spec, out_dir):
@@ -50,16 +55,26 @@ def _render_decals(spec, out_dir):
         decals.render_decal(d["kind"], d["color"], spec["seed"] + i, DECAL_RES, path)
         opacity = float(d.get("opacity", 1.0))
         name = "decal_%d_%s" % (i, d["kind"])
-        entries.append({"name": name, "image": path, "on": d["on"],
-                        "position": list(d["position"]), "normal": list(d["normal"]),
-                        "size": list(d["size"]), "opacity": opacity})
+        entries.append(
+            {
+                "name": name,
+                "image": path,
+                "on": d["on"],
+                "position": list(d["position"]),
+                "normal": list(d["normal"]),
+                "size": list(d["size"]),
+                "opacity": opacity,
+            }
+        )
     return entries
 
 
 def _add_decal_planes(entries):
     for e in entries:
         n = Vector(e["normal"]).normalized()
-        bpy.ops.mesh.primitive_plane_add(size=1, location=Vector(e["position"]) + n * 0.01)
+        bpy.ops.mesh.primitive_plane_add(
+            size=1, location=Vector(e["position"]) + n * 0.01
+        )
         o = bpy.context.active_object
         o.name = e["name"]
         o.scale = (e["size"][0], e["size"][1], 1)
@@ -95,8 +110,9 @@ def run(job):
 
     fbx, bake_s = None, 0.0
     if mode == "build":
-        bake_s = executor.bake_meshes(meshes, os.path.join(out_dir, "textures"),
-                                      job["tiles_dir"], spec, style)
+        bake_s = executor.bake_meshes(
+            meshes, os.path.join(out_dir, "textures"), job["tiles_dir"], spec, style
+        )
         executor.swap_to_baked(meshes)
         fbx = os.path.join(out_dir, "asset.fbx")
         executor.export_fbx(meshes, fbx)
@@ -108,16 +124,33 @@ def run(job):
     if mode == "sample":
         samples, size = 24, (800, 600)
     else:
-        samples, size = int(b.get("preview_samples", 64)), tuple(b.get("preview_res", (1200, 900)))
+        samples, size = (
+            int(b.get("preview_samples", 64)),
+            tuple(b.get("preview_res", (1200, 900))),
+        )
     preset = style.get("lighting", {}).get("preset", "overcast_exterior")
-    previews = preview.render_shots(res.shots, preset, os.path.join(out_dir, "previews"),
-                                    samples, size, bounds)
+    previews = preview.render_shots(
+        res.shots, preset, os.path.join(out_dir, "previews"), samples, size, bounds
+    )
 
     manifest = {
-        "asset": job["asset"], "mode": mode, "fbx": fbx, "bounds": bounds,
-        "meshes": [{"name": m.name, "tag": m.tag, "finish": m.finish, "tris": m.tris,
-                    "tiled": m.tiled, "metal": m.metal, "collide": m.collide,
-                    "maps": {k: os.path.abspath(v) for k, v in m.maps.items()}} for m in meshes],
+        "asset": job["asset"],
+        "mode": mode,
+        "fbx": fbx,
+        "bounds": bounds,
+        "meshes": [
+            {
+                "name": m.name,
+                "tag": m.tag,
+                "finish": m.finish,
+                "tris": m.tris,
+                "tiled": m.tiled,
+                "metal": m.metal,
+                "collide": m.collide,
+                "maps": {k: os.path.abspath(v) for k, v in m.maps.items()},
+            }
+            for m in meshes
+        ],
         "decals": decal_entries,
         "previews": [os.path.abspath(p) for p in previews],
         "bake_seconds": bake_s,

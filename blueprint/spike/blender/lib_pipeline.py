@@ -7,6 +7,7 @@ Builders (cabinet, house, ...) make parts into PARTS[tag] = [objects], then call
     swap_to_baked(meshes)                   # preview uses ONLY the baked maps
     export_fbx(meshes, path)
 """
+
 import math
 import os
 import time
@@ -15,13 +16,12 @@ import bpy
 from mathutils import Vector
 
 
-
 # ------------------------------------------------------------------ utils
 def lin(hexstr):
     h = hexstr.lstrip("#")
     out = []
     for i in (0, 2, 4):
-        c = int(h[i:i + 2], 16) / 255
+        c = int(h[i : i + 2], 16) / 255
         out.append(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4)
     return (*out, 1.0)
 
@@ -163,7 +163,12 @@ def make_finish(name, f, wear, ctx):
         for w, along in ((wx, 0), (wy, 1), (wz, 2)):
             cs, fs = [8 * s] * 3, [60 * s] * 3
             cs[along], fs[along] = 0.15 * s, 0.3 * s
-            gi = m("MULTIPLY_ADD", noise(cs, 2.5, 8, 0.65, 0.4), 0.7, m("MULTIPLY", noise(fs, 3.0, 3), 0.3))
+            gi = m(
+                "MULTIPLY_ADD",
+                noise(cs, 2.5, 8, 0.65, 0.4),
+                0.7,
+                m("MULTIPLY", noise(fs, 3.0, 3), 0.3),
+            )
             term = m("MULTIPLY", gi, w)
             g = term if g is None else m("ADD", g, term)
         ramp = N.new("ShaderNodeValToRGB")
@@ -180,21 +185,39 @@ def make_finish(name, f, wear, ctx):
     elif t == "paint":
         color = rgb(f["color"])
         mottle = noise((1, 1, 1), 2.0, 6, 0.6)
-        color = lerp_c(color, rgb("#000000"), m("MULTIPLY", m("SUBTRACT", mottle, 0.4), 0.12))
+        color = lerp_c(
+            color, rgb("#000000"), m("MULTIPLY", m("SUBTRACT", mottle, 0.4), 0.12)
+        )
         peel = noise((1, 1, 1), 300.0, 2)
-        rough = m("MULTIPLY_ADD", m("SUBTRACT", peel, 0.5), 0.05, f.get("roughness", 0.4))
+        rough = m(
+            "MULTIPLY_ADD", m("SUBTRACT", peel, 0.5), 0.05, f.get("roughness", 0.4)
+        )
         metal = 0.0
         bump_height, bump_strength = peel, f.get("orange_peel", 0.02)
     elif t == "metal":
         color = rgb(f["color"])
         br = noise((1, 80, 80), 6.0, 4)
-        rough = m("MULTIPLY_ADD", m("SUBTRACT", br, 0.5), 0.3 * f.get("brushed", 0.3), f.get("roughness", 0.4))
+        rough = m(
+            "MULTIPLY_ADD",
+            m("SUBTRACT", br, 0.5),
+            0.3 * f.get("brushed", 0.3),
+            f.get("roughness", 0.4),
+        )
         metal = 1.0
         bump_height, bump_strength = br, 0.05 * f.get("brushed", 0.3)
         if f.get("rust"):
-            blotch = smooth(noise((1, 1, 1), 18.0, 8, 0.7), 0.55 - 0.15 * f["rust"], 0.62)
-            rust = m("MINIMUM", m("ADD", m("MULTIPLY", blotch, f["rust"] * 1.4),
-                                  m("MULTIPLY", crevice(0.05), 2.0)), 1.0)
+            blotch = smooth(
+                noise((1, 1, 1), 18.0, 8, 0.7), 0.55 - 0.15 * f["rust"], 0.62
+            )
+            rust = m(
+                "MINIMUM",
+                m(
+                    "ADD",
+                    m("MULTIPLY", blotch, f["rust"] * 1.4),
+                    m("MULTIPLY", crevice(0.05), 2.0),
+                ),
+                1.0,
+            )
             color = lerp_c(color, rgb(f.get("rust_color", "#5C2C14")), rust)
             rough = lerp_f(rough, 0.9, rust)
             metal = lerp_f(1.0, 0.0, rust)
@@ -213,7 +236,9 @@ def make_finish(name, f, wear, ctx):
         color = lerp_c(rgb(f["mortar"]), color, edge)
         rough = f.get("roughness", 0.85)
         metal = 0.0
-        bump_height = m("ADD", m("MULTIPLY", edge, 1.0), m("MULTIPLY", noise((1, 1, 1), 8, 6), 0.3))
+        bump_height = m(
+            "ADD", m("MULTIPLY", edge, 1.0), m("MULTIPLY", noise((1, 1, 1), 8, 6), 0.3)
+        )
         bump_strength = f.get("bump", 0.3)
     else:
         raise ValueError(f"unknown finish type {t}")
@@ -225,7 +250,11 @@ def make_finish(name, f, wear, ctx):
     if WEAR.get("water_stains"):
         field = noise((1, 1, 1), 1.2, 3, 0.5, 1.5)
         ring = m("SUBTRACT", smooth(field, 0.50, 0.53), smooth(field, 0.535, 0.56))
-        stain = m("MULTIPLY", m("ADD", ring, m("MULTIPLY", smooth(field, 0.5, 0.6), 0.35)), WEAR["water_stains"])
+        stain = m(
+            "MULTIPLY",
+            m("ADD", ring, m("MULTIPLY", smooth(field, 0.5, 0.6), 0.35)),
+            WEAR["water_stains"],
+        )
         color = lerp_c(color, rgb("#1E140C"), m("MULTIPLY", stain, 0.6))
 
     if WEAR.get("streaks"):
@@ -237,7 +266,11 @@ def make_finish(name, f, wear, ctx):
 
     if WEAR.get("grime"):
         crev = smooth(crevice(0.25, 16), 0.05, 0.6)
-        grime = m("MULTIPLY", m("MULTIPLY", crev, WEAR["grime"]), m("ADD", 0.5, noise((1, 1, 1), 12.0, 4)))
+        grime = m(
+            "MULTIPLY",
+            m("MULTIPLY", crev, WEAR["grime"]),
+            m("ADD", 0.5, noise((1, 1, 1), 12.0, 4)),
+        )
         color = lerp_c(color, rgb("#120C08"), m("MINIMUM", grime, 0.9))
         rough = lerp_f(rough, 0.85, grime)
 
@@ -251,7 +284,11 @@ def make_finish(name, f, wear, ctx):
         L.new(bev.outputs["Normal"], dot.inputs[0])
         L.new(geo.outputs["Normal"], dot.inputs[1])
         edge = smooth(m("SUBTRACT", 1.0, dot.outputs["Value"]), 0.01, 0.12)
-        wear_m = m("MULTIPLY", m("MULTIPLY", edge, smooth(noise((1, 1, 1), 25.0, 6, 0.7), 0.35, 0.6)), WEAR["edge"])
+        wear_m = m(
+            "MULTIPLY",
+            m("MULTIPLY", edge, smooth(noise((1, 1, 1), 25.0, 6, 0.7), 0.35, 0.6)),
+            WEAR["edge"],
+        )
         color = lerp_c(color, rgb(f["edge_color"]), wear_m)
         rough = lerp_f(rough, 0.7, wear_m)
 
@@ -259,13 +296,24 @@ def make_finish(name, f, wear, ctx):
         ms = WEAR["moss"]
         up = smooth(nz_, 0.3, 0.9)
         low = m("SUBTRACT", 1.0, smooth(obj_z, 0.3, 2.5))
-        where = m("MINIMUM", m("ADD", m("ADD", m("MULTIPLY", up, 0.7), m("MULTIPLY", low, 0.8)),
-                               m("MULTIPLY", crevice(0.3), 1.2)), 1.0)
+        where = m(
+            "MINIMUM",
+            m(
+                "ADD",
+                m("ADD", m("MULTIPLY", up, 0.7), m("MULTIPLY", low, 0.8)),
+                m("MULTIPLY", crevice(0.3), 1.2),
+            ),
+            1.0,
+        )
         patchy = smooth(noise((1, 1, 1), 1.8, 8, 0.65), 0.42, 0.62)
         moss = m("MULTIPLY", m("MULTIPLY", where, patchy), ms["amount"])
         color = lerp_c(color, rgb(ms["color"]), moss)
         rough = lerp_f(rough, 0.95, moss)
-        bump_height = m("ADD", bump_height, m("MULTIPLY", moss, m("MULTIPLY", noise((1, 1, 1), 60, 4), 0.8)))
+        bump_height = m(
+            "ADD",
+            bump_height,
+            m("MULTIPLY", moss, m("MULTIPLY", noise((1, 1, 1), 60, 4), 0.8)),
+        )
 
     if WEAR.get("dust"):
         up = smooth(nz_, 0.55, 0.95)
@@ -281,12 +329,30 @@ def make_finish(name, f, wear, ctx):
         jitter = m("MULTIPLY", m("SUBTRACT", noise((1, 1, 1), 3.0, 4), 0.5), 0.25)
         u = m("ADD", m("DIVIDE", m("ADD", obj_x, W / 2), W), jitter)
         v = m("ADD", m("DIVIDE", obj_z, H), jitter)
-        region = m("MULTIPLY",
-                   m("MULTIPLY", smooth(u, rx[0] - 0.02, rx[0] + 0.05), m("SUBTRACT", 1.0, smooth(u, rx[1] - 0.08, rx[1]))),
-                   m("MULTIPLY", smooth(v, rz[0], rz[0] + 0.12), m("SUBTRACT", 1.0, smooth(v, rz[1] + 0.05, rz[1] + 0.1))))
+        region = m(
+            "MULTIPLY",
+            m(
+                "MULTIPLY",
+                smooth(u, rx[0] - 0.02, rx[0] + 0.05),
+                m("SUBTRACT", 1.0, smooth(u, rx[1] - 0.08, rx[1])),
+            ),
+            m(
+                "MULTIPLY",
+                smooth(v, rz[0], rz[0] + 0.12),
+                m("SUBTRACT", 1.0, smooth(v, rz[1] + 0.05, rz[1] + 0.1)),
+            ),
+        )
         drips = smooth(noise((14, 14, 0.5), 3.0, 4, 0.5), 0.55, 0.6)
-        smear = m("MULTIPLY", smooth(noise((1, 1, 1), 4.0, 6, 0.6, 0.8), 0.45, 0.5), smooth(v, rz[1] - 0.3, rz[1]))
-        mask = m("MULTIPLY", m("MINIMUM", m("MULTIPLY", m("MAXIMUM", drips, smear), region), 1.0), blood["amount"])
+        smear = m(
+            "MULTIPLY",
+            smooth(noise((1, 1, 1), 4.0, 6, 0.6, 0.8), 0.45, 0.5),
+            smooth(v, rz[1] - 0.3, rz[1]),
+        )
+        mask = m(
+            "MULTIPLY",
+            m("MINIMUM", m("MULTIPLY", m("MAXIMUM", drips, smear), region), 1.0),
+            blood["amount"],
+        )
         color = lerp_c(color, rgb(blood["color"]), mask)
         rough = lerp_f(rough, 0.35, mask)
 
@@ -333,13 +399,29 @@ def join_parts(PARTS, spec, ctx, prefix):
         bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.01)
         bpy.ops.object.mode_set(mode="OBJECT")
         f = spec["finishes"][fin]
-        mat, sockets, bsdf, out = make_finish(f"{tag}_{fin}_proc", f, spec.get("wear", {}), ctx)
+        mat, sockets, bsdf, out = make_finish(
+            f"{tag}_{fin}_proc", f, spec.get("wear", {}), ctx
+        )
         o.data.materials.clear()
         o.data.materials.append(mat)
         tris = sum(len(p.vertices) - 2 for p in o.data.polygons)
-        meshes.append({"obj": o, "tag": tag, "finish": fin, "metal": f["type"] == "metal",
-                       "mat": mat, "sockets": sockets, "bsdf": bsdf, "out": out, "tris": tris})
-        print(f"[pipeline] {o.name}: finish={fin} tris={tris}" + ("  OVER 20k!" if tris > 20000 else ""))
+        meshes.append(
+            {
+                "obj": o,
+                "tag": tag,
+                "finish": fin,
+                "metal": f["type"] == "metal",
+                "mat": mat,
+                "sockets": sockets,
+                "bsdf": bsdf,
+                "out": out,
+                "tris": tris,
+            }
+        )
+        print(
+            f"[pipeline] {o.name}: finish={fin} tris={tris}"
+            + ("  OVER 20k!" if tris > 20000 else "")
+        )
     return meshes
 
 
@@ -356,7 +438,9 @@ def bake(meshes, tex_dir, res_for, samples=32):
         activate(o)
         res = res_for(me["tag"])
         me["baked"] = {}
-        kinds = ["color", "roughness", "normal"] + (["metalness"] if me["metal"] else [])
+        kinds = ["color", "roughness", "normal"] + (
+            ["metalness"] if me["metal"] else []
+        )
         for kind in kinds:
             img = bpy.data.images.new(f"{o.name}_{kind}", res, res, alpha=False)
             if kind != "color":
@@ -420,8 +504,15 @@ def export_fbx(meshes, path):
     for me in meshes:
         me["obj"].select_set(True)
     bpy.ops.export_scene.fbx(
-        filepath=path, use_selection=True, apply_unit_scale=True, apply_scale_options="FBX_SCALE_UNITS",
-        axis_forward="-Z", axis_up="Y", mesh_smooth_type="FACE", path_mode="COPY", embed_textures=True,
+        filepath=path,
+        use_selection=True,
+        apply_unit_scale=True,
+        apply_scale_options="FBX_SCALE_UNITS",
+        axis_forward="-Z",
+        axis_up="Y",
+        mesh_smooth_type="FACE",
+        path_mode="COPY",
+        embed_textures=True,
     )
 
 

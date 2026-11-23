@@ -1,5 +1,6 @@
 """Cabinet geometry (ported from blueprint/spike/blender/cabinet_styled.py).
 Runs inside Blender. Units: studs. Front faces -Y, ground at z=0."""
+
 import math
 import random
 from typing import Dict
@@ -30,7 +31,9 @@ def build(params: Dict, rng: random.Random) -> BuildResult:
         return o
 
     def cyl(tag, r, depth, loc, rot, verts=16):
-        bpy.ops.mesh.primitive_cylinder_add(vertices=verts, radius=r, depth=depth, location=loc, rotation=rot)
+        bpy.ops.mesh.primitive_cylinder_add(
+            vertices=verts, radius=r, depth=depth, location=loc, rotation=rot
+        )
         parts[tag].append(bpy.context.active_object)
 
     def handle(length, center, vertical):
@@ -63,7 +66,11 @@ def build(params: Dict, rng: random.Random) -> BuildResult:
         h = inner_h * r
         cz = z - h / 2
         box("fronts", (x1 - x0 - GAP, PANEL_T, h - GAP), ((x0 + x1) / 2, fy, cz))
-        handle(min(0.6, (x1 - x0) * 0.4), ((x0 + x1) / 2, fy - PANEL_T / 2, cz + h * 0.18), vertical=False)
+        handle(
+            min(0.6, (x1 - x0) * 0.4),
+            ((x0 + x1) / 2, fy - PANEL_T / 2, cz + h * 0.18),
+            vertical=False,
+        )
         z -= h
 
     # two doors (right)
@@ -71,28 +78,59 @@ def build(params: Dict, rng: random.Random) -> BuildResult:
     door_w = (dx1 - dx0) / 2
     for i in range(2):
         cx = dx0 + door_w * (i + 0.5)
-        box("fronts", (door_w - GAP, PANEL_T, inner_h - GAP), (cx, fy, inner_bottom + inner_h / 2))
-        box("fronts", (door_w - 0.3, 0.012, inner_h - 0.3),
-            (cx, fy - PANEL_T / 2 - 0.004, inner_bottom + inner_h / 2), bevel=0.004)
+        box(
+            "fronts",
+            (door_w - GAP, PANEL_T, inner_h - GAP),
+            (cx, fy, inner_bottom + inner_h / 2),
+        )
+        box(
+            "fronts",
+            (door_w - 0.3, 0.012, inner_h - 0.3),
+            (cx, fy - PANEL_T / 2 - 0.004, inner_bottom + inner_h / 2),
+            bevel=0.004,
+        )
         hx = cx + (door_w / 2 - 0.14) * (1 if i == 0 else -1)
-        handle(inner_h * 0.42, (hx, fy - PANEL_T / 2, inner_bottom + inner_h * 0.55), vertical=True)
+        handle(
+            inner_h * 0.42,
+            (hx, fy - PANEL_T / 2, inner_bottom + inner_h * 0.55),
+            vertical=True,
+        )
 
     # splayed legs; base sits on z=0, top tucks 0.02 into the carcass bottom
     for sx in (-1, 1):
         for sy in (-1, 1):
             lx, ly = sx * (W / 2 - 0.22), sy * (D / 2 - 0.2)
-            bpy.ops.mesh.primitive_cone_add(vertices=16, radius1=0.035, radius2=0.075, depth=LEG_H + 0.02,
-                                            location=(lx, ly, (LEG_H + 0.02) / 2))
+            bpy.ops.mesh.primitive_cone_add(
+                vertices=16,
+                radius1=0.035,
+                radius2=0.075,
+                depth=LEG_H + 0.02,
+                location=(lx, ly, (LEG_H + 0.02) / 2),
+            )
             leg = bpy.context.active_object
             leg.rotation_euler = (-sy * math.radians(6), sx * math.radians(6), 0)
             parts["legs"].append(leg)
             tilt = math.tan(math.radians(6)) * LEG_H / 2
-            cyl("foot_caps", 0.038, 0.04, (lx - sx * tilt, ly - sy * tilt, 0.02), (0, 0, 0))
+            cyl(
+                "foot_caps",
+                0.038,
+                0.04,
+                (lx - sx * tilt, ly - sy * tilt, 0.02),
+                (0, 0, 0),
+            )
 
     H = LEG_H + BODY_H
     shots = [
         ("wide", (-W * 1.05, -W * 1.6, 3.4), (0.0, 0.0, H * 0.6 + 0.5), 40.0),
-        ("close", (-W / 2 + DRAWER_COL_W * 0.5 - 0.9, -D / 2 - 2.3, LEG_H + BODY_H * 0.65 + 0.7),
-         (-W / 2 + DRAWER_COL_W * 0.5, -D / 2, LEG_H + BODY_H * 0.6), 50.0),
+        (
+            "close",
+            (
+                -W / 2 + DRAWER_COL_W * 0.5 - 0.9,
+                -D / 2 - 2.3,
+                LEG_H + BODY_H * 0.65 + 0.7,
+            ),
+            (-W / 2 + DRAWER_COL_W * 0.5, -D / 2, LEG_H + BODY_H * 0.6),
+            50.0,
+        ),
     ]
     return BuildResult(parts, shots, {"W": W, "H": H})

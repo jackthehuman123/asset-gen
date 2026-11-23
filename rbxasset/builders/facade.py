@@ -4,6 +4,7 @@ A wall plane is the outer face of the building footprint (W wide in x, D deep in
 `u` runs along x for front/back and along y for left/right; `v` is world z.
 Openings are (kind, u0, u1, v0, v1) with kind in window, door, big_door.
 tags: {"wall", "trim", "glazing", "door"} -> part tag names."""
+
 import math
 
 SIDES = ("front", "back", "left", "right")
@@ -54,7 +55,20 @@ def fit_opening(kit, tags, side, W, D, t, op):
             _b(kit, dr, side, W, D, cx, vc, lw, h, -0.02, 0.18)
             ang = math.atan2(h, lw)
             for a in (ang, -ang):
-                _b(kit, tr, side, W, D, cx, vc, math.hypot(lw, h) * 0.92, 0.22, 0.08, 0.1, rot=(0, a, 0))
+                _b(
+                    kit,
+                    tr,
+                    side,
+                    W,
+                    D,
+                    cx,
+                    vc,
+                    math.hypot(lw, h) * 0.92,
+                    0.22,
+                    0.08,
+                    0.1,
+                    rot=(0, a, 0),
+                )
         for u in (u0 - 0.1, u1 + 0.1):
             _b(kit, tr, side, W, D, u, vc, 0.2, h + 0.2, 0.14, 0.3)
         _b(kit, tr, side, W, D, uc, v1 + 0.2, w + 0.6, 0.3, 0.16, 0.3)
@@ -70,11 +84,25 @@ def wall_with_openings(kit, tags, side, W, D, t, z0, z1, openings):
     for va, vb in zip(vs, vs[1:]):
         if vb - va < 1e-6:
             continue
-        cover = sorted((o[1], o[2]) for o in openings if o[3] <= va + 1e-6 and o[4] >= vb - 1e-6)
+        cover = sorted(
+            (o[1], o[2]) for o in openings if o[3] <= va + 1e-6 and o[4] >= vb - 1e-6
+        )
         cur = -L / 2
         for a, b in cover + [(L / 2, L / 2)]:
             if a - cur > 1e-6:
-                _b(kit, tags["wall"], side, W, D, (cur + a) / 2, (va + vb) / 2, a - cur, vb - va, 0.0, t)
+                _b(
+                    kit,
+                    tags["wall"],
+                    side,
+                    W,
+                    D,
+                    (cur + a) / 2,
+                    (va + vb) / 2,
+                    a - cur,
+                    vb - va,
+                    0.0,
+                    t,
+                )
             cur = max(cur, b)
     for op in openings:
         fit_opening(kit, tags, side, W, D, t, op)
@@ -82,4 +110,7 @@ def wall_with_openings(kit, tags, side, W, D, t, z0, z1, openings):
 
 def evenly(L, n, w):
     """n openings of width w centred in n equal bays across length L: list of (u0, u1)."""
-    return [(-L / 2 + (i + 0.5) * L / n - w / 2, -L / 2 + (i + 0.5) * L / n + w / 2) for i in range(n)]
+    return [
+        (-L / 2 + (i + 0.5) * L / n - w / 2, -L / 2 + (i + 0.5) * L / n + w / 2)
+        for i in range(n)
+    ]
