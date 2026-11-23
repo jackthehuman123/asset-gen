@@ -9,5 +9,7 @@ blueprint/out_*/
 blueprint/_tiles/
 *.log
 tools/
+tools/*
 .superpowers/
 RESTRUCTURE.md
+uv.lock
